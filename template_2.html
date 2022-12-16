@@ -1,0 +1,59 @@
+<!DOCTYPE html>
+<html lang="en">
+	<head>
+	  <meta charset="UTF-8">
+	  <meta http-equiv="X-UA-Compatible" content="IE=edge">
+	  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+	  <title>Page(Term)@DuckCloud</title>
+	  <link rel="stylesheet" href="/regular.css"></link>
+      <link rel="stylesheet" href="/xterm/css/xterm.css" />
+      <script src="/xterm/lib/xterm.js"></script>
+	</head>
+	<body>
+		<a href="/manage" style="text-decoration: none;" class="logged-in-as">🚪 <nodejs-embed>username</nodejs-embed></a>
+		<h1>☁️ DuckCloud</h1>
+		<hr>
+		<a href="/" class="arrow">←</a> | <nodejs-embed>vm_name</nodejs-embed> | <a href="/shutoff/<nodejs-embed>vm_count</nodejs-embed>" onclick="document.body.insertAdjacentHTML('afterbegin','Do not click away! The page can be loading too long because Docker takes too long to stop a container.');"><nodejs-embed>switch</nodejs-embed></a> <a href="/burn/<nodejs-embed>vm_count</nodejs-embed>" onclick="return confirm('Are you sure?')">Remove VM</a>
+		<br>
+		<textarea id="copypaste" placeholder="Copy-paste box" title="Use this for copy-pasting purposes."></textarea>
+		<div id="term" class="object" style="width: 736px;"></div>
+		<script>
+			let term = new Terminal();
+        	term.open(document.getElementById('term'));
+			let info = "";
+			function wait(ms) {
+				return new Promise(function(resolve) {
+					setTimeout(function() {
+						resolve("k");
+					}, ms)
+				});
+			}
+			(async function () {
+				await fetch("/resize/<nodejs-embed>vm_count</nodejs-embed>?w=" + term.cols + "&h=" + term.rows);
+				term._core._renderService.clear()
+				term.resize(term.cols, term.rows);
+				while (true) {
+					let a = await fetch("/newInput/<nodejs-embed>vm_count</nodejs-embed>", {
+						method: "POST"
+					});
+					a = await a.text();
+					a = a.replace(info, "");
+					if (a) {
+						info = info + a;
+						term.write(a);
+					}
+					if (info.endsWith("\r\nYour virtual machine is about to stop. To use this Linux console again, restart your VM.")) break;
+				}
+			})();
+			term.onKey(async function (e) {
+				await fetch("/sendInput/<nodejs-embed>vm_count</nodejs-embed>?new=" + encodeURIComponent(e.key));
+			});
+			copypaste.oninput = async function() {
+				while (copypaste.value) {
+					await fetch("/sendInput/<nodejs-embed>vm_count</nodejs-embed>?new=" + encodeURIComponent(copypaste.value[0].replace("\n","\r")));
+					copypaste.value = copypaste.value.slice(1);
+				}
+			}
+		</script>
+	</body>
+</html>
