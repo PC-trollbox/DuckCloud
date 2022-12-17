@@ -190,7 +190,7 @@ app.get("/settings/:vm", async function(req, res) {
 		res.clearCookie("token");
 		return res.redirect("/");
 	}
-	if (Object.keys(user.object.virtuals).length < Number(req.params.vm)) return res.redirect("/main");
+	if (!Object.keys(user.object.virtuals)[Number(req.params.vm)]) return res.redirect("/main");
 	let container = docker.getContainer(user.object.virtuals[Object.keys(user.object.virtuals)[Number(req.params.vm)]]);
 	let state = await container.inspect();
     res.render(__dirname + "/template_2.html", {
@@ -210,11 +210,7 @@ app.get("/burn/:vm", async function(req, res) {
 		res.clearCookie("token");
 		return res.redirect("/");
 	}
-	if (Object.keys(user.object.virtuals).length < Number(req.params.vm)) return res.redirect("/main");
-	let container = docker.getContainer(user.object.virtuals[Object.keys(user.object.virtuals)[Number(req.params.vm)]]);
-	let state = await container.inspect();
-	if (state.State.Running) await container.stop();
-	await container.remove();
+	if (!Object.keys(user.object.virtuals)[Number(req.params.vm)]) return res.redirect("/main");
 	let exclude_name = Object.keys(user.object.virtuals)[Number(req.params.vm)];
 	let newList = {};
 	for (let vm in user.object.virtuals) {
@@ -223,6 +219,10 @@ app.get("/burn/:vm", async function(req, res) {
 	}
 	user.object.virtuals = newList;
 	await db.set(user.username, user.object);
+	let container = docker.getContainer(user.object.virtuals[Object.keys(user.object.virtuals)[Number(req.params.vm)]]);
+	let state = await container.inspect();
+	if (state.State.Running) await container.stop();
+	await container.remove();
 	res.redirect("/main");
 });
 
@@ -235,7 +235,7 @@ app.get("/shutoff/:vm", async function(req, res) {
 		res.clearCookie("token");
 		return res.redirect("/");
 	}
-	if (Object.keys(user.object.virtuals).length < Number(req.params.vm)) return res.redirect("/main");
+	if (!Object.keys(user.object.virtuals)[Number(req.params.vm)]) return res.redirect("/main");
 	let container = docker.getContainer(user.object.virtuals[Object.keys(user.object.virtuals)[Number(req.params.vm)]]);
 	let state = await container.inspect();
 	if (state.State.Running) {
@@ -289,7 +289,7 @@ app.post("/newInput/:vm", async function(req, res) {
 		res.clearCookie("token");
 		return res.redirect("/");
 	}
-	if (Object.keys(user.object.virtuals).length < Number(req.params.vm)) return res.redirect("/main");
+	if (!Object.keys(user.object.virtuals)[Number(req.params.vm)]) return res.redirect("/main");
 	let our_vm = all_features[user.object.virtuals[Object.keys(user.object.virtuals)[Number(req.params.vm)]]];
 	if (!our_vm) return res.end();
 	if (our_vm.ats) {
@@ -307,7 +307,7 @@ app.get("/sendInput/:vm", async function(req, res) {
 		res.clearCookie("token");
 		return res.redirect("/");
 	}
-	if (Object.keys(user.object.virtuals).length < Number(req.params.vm)) return res.redirect("/main");
+	if (!Object.keys(user.object.virtuals)[Number(req.params.vm)]) return res.redirect("/main");
 	let our_vm = all_features[user.object.virtuals[Object.keys(user.object.virtuals)[Number(req.params.vm)]]];
 	if (!our_vm) return res.end();
 	if (our_vm.ats) {
@@ -326,7 +326,7 @@ app.get("/resize/:vm", async function(req, res) {
 		res.clearCookie("token");
 		return res.redirect("/");
 	}
-	if (Object.keys(user.object.virtuals).length < Number(req.params.vm)) return res.redirect("/main");
+	if (!Object.keys(user.object.virtuals)[Number(req.params.vm)]) return res.redirect("/main");
 	let our_vm = all_features[user.object.virtuals[Object.keys(user.object.virtuals)[Number(req.params.vm)]]];
 	if (!our_vm) return res.end();
 	if (our_vm.ats) {

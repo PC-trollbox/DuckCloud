@@ -15,12 +15,61 @@
 		<hr>
 		<a href="/" class="arrow">←</a> | <nodejs-embed>vm_name</nodejs-embed> | <a href="/shutoff/<nodejs-embed>vm_count</nodejs-embed>" onclick="document.body.insertAdjacentHTML('afterbegin','Do not click away! The page can be loading too long because Docker takes too long to stop a container.');"><nodejs-embed>switch</nodejs-embed></a> <a href="/burn/<nodejs-embed>vm_count</nodejs-embed>" onclick="return confirm('Are you sure?')">Remove VM</a>
 		<br>
-		<textarea id="copypaste" placeholder="Copy-paste box" title="Use this for copy-pasting purposes."></textarea>
+		Output latency: <label id="outlat">n/a </label>ms
+		<br>
+		Input latency: <label id="inlat">n/a </label>ms
+		<br>
+		<noscript><b>Hello, we saw that you have no JavaScript. Sorry, but you cannot use the terminal of this VM. If you want to use the terminal, please enable JavaScript.</b> If you need help, visit <a href="https://enable-javascript.com/">https://enable-javascript.com/</a></noscript>
 		<div id="term" class="object" style="width: 736px;"></div>
+		<textarea id="copypaste" placeholder="Copy-paste box" title="Use this for copy-pasting purposes."></textarea>
 		<script>
 			let term = new Terminal();
         	term.open(document.getElementById('term'));
 			let info = "";
+			let _latency_out_time = 0;
+			let latency_out = {
+				arr: [],
+				value: 0,
+				time: 0,
+				get time() {
+					return _latency_out_time;
+				},
+				set time(v) {
+					if (this.time != 0) {
+						this.arr.push(this.value);
+						this.value = 0;
+					}
+					_latency_out_time = v;
+				},
+				avg: 0,
+				get avg() {
+					let a = 0;
+					for (let b of this.arr) { a = a + b; }
+					return a / this.arr.length;
+				}
+			}
+			let _latency_in_time = 0;
+			let latency_in = {
+				arr: [],
+				value: 0,
+				time: 0,
+				get time() {
+					return _latency_in_time;
+				},
+				set time(v) {
+					if (this.time != 0) {
+						this.arr.push(this.value);
+						this.value = 0;
+					}
+					_latency_in_time = v;
+				},
+				avg: 0,
+				get avg() {
+					let a = 0;
+					for (let b of this.arr) { a = a + b; }
+					return a / this.arr.length;
+				}
+			}
 			function wait(ms) {
 				return new Promise(function(resolve) {
 					setTimeout(function() {
@@ -30,12 +79,14 @@
 			}
 			(async function () {
 				await fetch("/resize/<nodejs-embed>vm_count</nodejs-embed>?w=" + term.cols + "&h=" + term.rows);
-				term._core._renderService.clear()
+				term._core._renderService.clear();
 				term.resize(term.cols, term.rows);
 				while (true) {
+					latency_out.time = Date.now();
 					let a = await fetch("/newInput/<nodejs-embed>vm_count</nodejs-embed>", {
 						method: "POST"
 					});
+					latency_out.value = Date.now() - latency_out.time;
 					a = await a.text();
 					a = a.replace(info, "");
 					if (a) {
@@ -46,14 +97,22 @@
 				}
 			})();
 			term.onKey(async function (e) {
+				latency_in.time = Date.now();
 				await fetch("/sendInput/<nodejs-embed>vm_count</nodejs-embed>?new=" + encodeURIComponent(e.key));
+				latency_in.value = Date.now() - latency_in.time;
 			});
 			copypaste.oninput = async function() {
 				while (copypaste.value) {
+					latency_in.time = Date.now();
 					await fetch("/sendInput/<nodejs-embed>vm_count</nodejs-embed>?new=" + encodeURIComponent(copypaste.value[0].replace("\n","\r")));
+					latency_in.value = Date.now() - latency_in.time;
 					copypaste.value = copypaste.value.slice(1);
 				}
 			}
+			setInterval(function() {
+				outlat.innerText = (Math.round(latency_out.avg) || "n/a ");
+				inlat.innerText = (Math.round(latency_in.avg) || "n/a ");
+			}, 1000)
 		</script>
 	</body>
 </html>
