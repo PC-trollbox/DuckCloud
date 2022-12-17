@@ -128,7 +128,7 @@ app.post("/register", async function(req, res) {
 	}
 	await db.set(req.body.username, {
 		password: SHA256(req.body.password),
-		token: genToken(16),
+		token: genToken(64),
 		virtuals: {},
         isPRO: false
 	});
@@ -565,7 +565,7 @@ app.post("/changePassword", async function(req, res) {
 	}
 	if (SHA256(req.body.oldPassword) == user.object.password) {
 		user.object.password = SHA256(req.body.newPassword);
-		user.object.token = genToken(16);
+		user.object.token = genToken(64);
 		await db.set(user.username, user.object);
 		//Intended behaviour.
 		res.clearCookie("token");
@@ -609,7 +609,7 @@ app.post("/changeToken", async function(req, res) {
 		res.clearCookie("token");
 		return res.redirect("/");
 	}
-	user.object.token = genToken(16);
+	user.object.token = genToken(64);
 	await db.set(user.username, user.object);
 	res.clearCookie("token");
 	res.redirect("/");
