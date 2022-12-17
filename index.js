@@ -492,26 +492,26 @@ app.post("/user_page", async function(req, res) {
 			return res.redirect("/ul_link");
 		}
 		let user = await db.get(req.body.old_user);
+		let token = genToken(32);
+		let data = await fetch("https://ultimatelogon.pcprojects.tk/appdata", {
+			headers: {
+				"Cookie": "token=" + req.cookies.token_createfor
+			}
+		});
+		data = await data.json();
+		data["duckcloud_token"] = token;
+		await fetch("https://ultimatelogon.pcprojects.tk/appdata", {
+			method: "POST",
+			headers: {
+				"Content-Type": "application/json",
+				"Cookie": "token=" + req.cookies.token_createfor
+			},
+			body: JSON.stringify({
+				"appdata": JSON.stringify(data)
+			})
+		});
 		if (SHA256(req.body.old_pass) == user.password) {
-			let token = genToken(32);
 			user.linkedTo = token;
-			let data = await fetch("https://ultimatelogon.pcprojects.tk/appdata", {
-				headers: {
-					"Cookie": "token=" + req.cookies.token_createfor
-				}
-			});
-			data = await data.json();
-			data["duckcloud_token"] = token;
-			await fetch("https://ultimatelogon.pcprojects.tk/appdata", {
-				method: "POST",
-				headers: {
-					"Content-Type": "application/json",
-					"Cookie": "token=" + req.cookies.token_createfor
-				},
-				body: JSON.stringify({
-					"appdata": JSON.stringify(data)
-				})
-			});
 			await db.set(req.body.old_user, user);
 		} else {
 			return res.redirect("/ul_link");
@@ -527,7 +527,8 @@ app.post("/user_page", async function(req, res) {
 			password: req.cookies.createfor_password,
 			token: genToken(16),
 			virtuals: {},
-			isPRO: false
+			isPRO: false,
+			assignedTo: token
 		});
 	}
 	res.clearCookie("token_createfor");
