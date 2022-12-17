@@ -196,7 +196,7 @@ app.get("/settings/:vm", async function(req, res) {
     res.render(__dirname + "/template_2.html", {
 		username: he.encode(user.username),
 		vm_count: req.params.vm,
-		vm_name: Object.keys(user.object.virtuals)[Number(req.params.vm)],
+		vm_name: he.encode(Object.keys(user.object.virtuals)[Number(req.params.vm)]),
 		switch: state.State.Running ? "Turn off" : "Turn on"
 	});
 });
@@ -468,7 +468,7 @@ app.get("/user_page", async function(req, res) {
 		return res.redirect("/ul_link");
 	}
 	res.render(__dirname + "/select_user_type.html", {
-		username: await a.text()
+		username: he.encode(await a.text())
 	});
 });
 app.post("/user_page", async function(req, res) {
