@@ -217,11 +217,13 @@ app.get("/burn/:vm", async function(req, res) {
 	let state = await container.inspect();
 	if (state.State.Running) {
 		if (all_features[user.object.virtuals[Object.keys(user.object.virtuals)[Number(req.params.vm)]]]) {
-			if (!all_features.ats) {
+			if (!all_features[user.object.virtuals[Object.keys(user.object.virtuals)[Number(req.params.vm)]]].ats) {
 				all_features[user.object.virtuals[Object.keys(user.object.virtuals)[Number(req.params.vm)]]] = {
 					ats: true
 				};
 				await container.stop();
+			} else {
+				return res.redirect("/settings/" + req.params.vm);
 			}
 		} else {
 			all_features[user.object.virtuals[Object.keys(user.object.virtuals)[Number(req.params.vm)]]] = {
