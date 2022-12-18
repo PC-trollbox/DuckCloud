@@ -431,16 +431,6 @@ app.get("/logoff", async function(req, res) {
 	return res.redirect("/");
 });
 
-app.get("/terminal", async function(req, res) {
-	let user = await getUserByToken(req.cookies.token);
-	if (!user) {
-		user = {username: "demouser"}
-	}
-	res.render(__dirname + "/template_2.html", {
-		username: he.encode(user.username)
-	});
-});
-
 app.get("/ul_link", async function(req, res) {
 	if (req.cookies.token) return res.redirect("/main");
 	if (req.cookies.token_createfor) return res.redirect("/user_page");
