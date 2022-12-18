@@ -388,7 +388,7 @@ app.post("/newVM", async function(req, res) {
 	}
 	if (!user.object.isPRO && Object.keys(user.object.virtuals).length >= 1) {
 		return res.render(__dirname + "/not_pro_yet.html", {
-			username: "PC"
+			username: he.encode(user.username)
 		});
 	}
 	if (!user.object.isPRO && (req.body.shouldUse512mbRAM || "off") == "on") {
