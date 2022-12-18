@@ -252,8 +252,10 @@ app.get("/shutoff/:vm", async function(req, res) {
 	if (!Object.keys(user.object.virtuals)[Number(req.params.vm)]) return res.redirect("/main");
 	let container = docker.getContainer(user.object.virtuals[Object.keys(user.object.virtuals)[Number(req.params.vm)]]);
 	let state = await container.inspect();
-	if (all_features[user.object.virtuals[Object.keys(user.object.virtuals)[Number(req.params.vm)]]].ats && state.state.Running) {
-		return res.redirect("/settings/" + req.params.vm);
+	if (all_features[user.object.virtuals[Object.keys(user.object.virtuals)[Number(req.params.vm)]]] && state.state.Running) {
+		if (all_features[user.object.virtuals[Object.keys(user.object.virtuals)[Number(req.params.vm)]]].ats) {
+			return res.redirect("/settings/" + req.params.vm);
+		}
 	}
 	if (state.State.Running) {
 		all_features[user.object.virtuals[Object.keys(user.object.virtuals)[Number(req.params.vm)]]] = {
