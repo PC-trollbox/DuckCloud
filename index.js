@@ -213,15 +213,29 @@ app.get("/burn/:vm", async function(req, res) {
 	if (!Object.keys(user.object.virtuals)[Number(req.params.vm)]) return res.redirect("/main");
 	let exclude_name = Object.keys(user.object.virtuals)[Number(req.params.vm)];
 	let newList = {};
+	let container = docker.getContainer(user.object.virtuals[Object.keys(user.object.virtuals)[Number(req.params.vm)]]);
+	let state = await container.inspect();
+	if (state.State.Running) {
+		if (all_features[user.object.virtuals[Object.keys(user.object.virtuals)[Number(req.params.vm)]]]) {
+			if (!all_features.ats) {
+				all_features[user.object.virtuals[Object.keys(user.object.virtuals)[Number(req.params.vm)]]] = {
+					ats: true
+				};
+				await container.stop();
+			}
+		} else {
+			all_features[user.object.virtuals[Object.keys(user.object.virtuals)[Number(req.params.vm)]]] = {
+				ats: true
+			};
+			await container.stop();
+		}
+	}
 	for (let vm in user.object.virtuals) {
 		if (vm == exclude_name) continue;
 		newList[vm] = user.object.virtuals[vm];
 	}
 	user.object.virtuals = newList;
 	await db.set(user.username, user.object);
-	let container = docker.getContainer(user.object.virtuals[Object.keys(user.object.virtuals)[Number(req.params.vm)]]);
-	let state = await container.inspect();
-	if (state.State.Running) await container.stop();
 	await container.remove();
 	res.redirect("/main");
 });
