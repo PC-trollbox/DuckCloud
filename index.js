@@ -293,7 +293,7 @@ app.get("/shutoff/:vm", async function(req, res) {
 				};
 				await container.stop();
 			}
-			return res.render(__dirname + "/failed_to_start.html", {
+			return res.status(500).render(__dirname + "/failed_to_start.html", {
 				username: he.encode(user.username)
 			});
 		}
@@ -367,7 +367,7 @@ app.get("/newVM", async function(req, res) {
 		return res.redirect("/");
 	}
 	if (!user.object.isPRO && Object.keys(user.object.virtuals).length >= 1) {
-		return res.render(__dirname + "/not_pro_yet.html", {
+		return res.status(400).render(__dirname + "/not_pro_yet.html", {
 			username: he.encode(user.username)
 		});
 	}
@@ -387,7 +387,7 @@ app.post("/newVM", async function(req, res) {
 		return res.redirect("/");
 	}
 	if (!user.object.isPRO && Object.keys(user.object.virtuals).length >= 1) {
-		return res.render(__dirname + "/not_pro_yet.html", {
+		return res.status(400).render(__dirname + "/not_pro_yet.html", {
 			username: he.encode(user.username)
 		});
 	}
