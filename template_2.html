@@ -121,6 +121,7 @@
 				outlat.innerText = (Math.round(latency_out.avg) || "n/a ");
 				inlat.innerText = (Math.round(latency_in.avg) || "n/a ");
 			}, 1000)
+			term.textarea?.setAttribute("enterkeyhint", "send");
 		</script>
 	</body>
 </html>
