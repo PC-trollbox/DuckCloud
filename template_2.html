@@ -26,6 +26,7 @@
 			let term = new Terminal();
         	term.open(document.getElementById('term'));
 			let info = "";
+			let current_routine = false; //reason: mobile phone users can't use the terminal
 			let _latency_out_time = 0;
 			let latency_out = {
 				arr: [],
@@ -102,12 +103,19 @@
 				latency_in.value = Date.now() - latency_in.time;
 			});
 			copypaste.oninput = async function() {
-				while (copypaste.value) {
-					latency_in.time = Date.now();
-					await fetch("/sendInput/<nodejs-embed>vm_count</nodejs-embed>?new=" + encodeURIComponent(copypaste.value[0].replace("\n","\r")));
-					latency_in.value = Date.now() - latency_in.time;
-					copypaste.value = copypaste.value.slice(1);
-				}
+				setTimeout(async function() {
+					while (current_routine) {
+						await wait(100);
+					}
+					current_routine = true;
+					while (copypaste.value) {
+						latency_in.time = Date.now();
+						await fetch("/sendInput/<nodejs-embed>vm_count</nodejs-embed>?new=" + encodeURIComponent(copypaste.value[0].replace("\n","\r")));
+						latency_in.value = Date.now() - latency_in.time;
+						copypaste.value = copypaste.value.slice(1);
+					}
+					current_routine = false;
+				})
 			}
 			setInterval(function() {
 				outlat.innerText = (Math.round(latency_out.avg) || "n/a ");
