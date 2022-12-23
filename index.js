@@ -457,11 +457,14 @@ app.get("/ul_link", async function(req, res) {
 	if (data.duckcloud_token) {
 		let user = await findUserByDuckCloudAssignedToken(data.duckcloud_token);
 		if (!user) return res.redirect("/user_page");
+		res.clearCookie("token_createfor");
+		res.clearCookie("createfor_password");
+		if (user.object.block_ul) {
+			return res.redirect("https://ultimatelogon.pcprojects.tk/blocked_user?appName=DuckCloud")
+		}
 		res.cookie("token", user.token, {
 			maxAge: 30 * 24 * 60 * 60 * 1000
 		});
-		res.clearCookie("token_createfor");
-		res.clearCookie("createfor_password");
 		return res.redirect("/main");
 	}
 	res.redirect("/user_page");
@@ -503,6 +506,9 @@ app.post("/user_page", async function(req, res) {
 			return res.redirect("/ul_link");
 		}
 		let user = await db.get(req.body.old_user);
+		if (user.block_ul) {
+			return res.redirect("https://ultimatelogon.pcprojects.tk/blocked_user?appName=DuckCloud")
+		}
 		let token = genToken(32);
 		let data = await fetch("https://ultimatelogon.pcprojects.tk/appdata", {
 			headers: {
