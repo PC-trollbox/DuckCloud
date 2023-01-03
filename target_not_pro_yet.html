@@ -1,0 +1,43 @@
+<!DOCTYPE html>
+<html lang="en">
+	<head>
+	  <meta charset="UTF-8">
+	  <meta http-equiv="X-UA-Compatible" content="IE=edge">
+	  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+	  <title>Powered by DuckCloud</title>
+	  <link rel="stylesheet" href="/regular.css"></link>
+	</head>
+	<body>
+		<a href="/manage" style="text-decoration: none;" class="logged-in-as">🚪 <nodejs-embed>username</nodejs-embed></a>
+		<h1>☁️ DuckCloud</h1>
+		<hr>
+		<a href="/settings/<nodejs-embed>vm_count</nodejs-embed>" class="arrow">←</a> | <nodejs-embed>vm_name</nodejs-embed>
+		<br>
+		This page is being protected by DuckCloud
+		<br>
+        Description about this page:
+        <br>
+        <em>You can transfer a VM to someone else here.</em>
+        <br>
+        Precondition failed: The target must have a PRO account in order to have two or more VMs.
+        <br>
+        Tell them to contact PC#7105 to obtain PRO status.
+		<hr>
+		<b>Change owner of your VM</b>
+		<form action="/chown/<nodejs-embed>vm_count</nodejs-embed>" method="post">
+			After you click "Change owner", DuckCloud will do the following:
+			<br>
+			1. Remove the access permissions <b>from your DuckCloud ID</b>
+			<br>
+			2. Give the DuckCloud ID specified below the access permissions.
+			<br>
+			NOTE 1: If you have launched the VM, the VM will still be launched and in the shell.
+			<br>
+			NOTE 2: If the user has no PRO flag and already has 1 machine, the ownership won't be changed and this page will be shown.
+			<hr>
+			Username: <input name="username" placeholder="New owner's DuckCloud ID" required></input>
+			<hr>
+			<button onclick="return confirm('Are you sure?');">Change ownership</button>
+		</form>
+	</body>
+</html>

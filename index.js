@@ -301,6 +301,53 @@ app.get("/shutoff/:vm", async function(req, res) {
 	res.redirect("/settings/" + req.params.vm);
 });
 
+app.get("/chown/:vm", async function(req, res) {
+    if (!req.cookies.token) {
+		return res.redirect("/");
+	}
+	let user = await getUserByToken(req.cookies.token);
+	if (!user) {
+		res.clearCookie("token");
+		return res.redirect("/");
+	}
+	if (!Object.keys(user.object.virtuals)[Number(req.params.vm)]) return res.redirect("/main");
+    res.render(__dirname + "/chown.html", {
+		username: he.encode(user.username),
+		vm_count: req.params.vm,
+		vm_name: he.encode(Object.keys(user.object.virtuals)[Number(req.params.vm)])
+	});
+});
+
+app.post("/chown/:vm", async function(req, res) {
+    if (!req.cookies.token) {
+		return res.redirect("/");
+	}
+	let user = await getUserByToken(req.cookies.token);
+	if (!user) {
+		res.clearCookie("token");
+		return res.redirect("/");
+	}
+	if (!Object.keys(user.object.virtuals)[Number(req.params.vm)]) return res.redirect("/main");
+	let our_vm = Object.keys(user.object.virtuals)[Number(req.params.vm)];
+	if (req.body.username == user.username) return res.redirect("/chown/" + req.params.vm); //do not change the VM ownership
+	let newOwner = await db.get(req.body.username);
+	if (!newOwner) return res.redirect("/chown/" + req.params.vm);
+	if (!newOwner.isPRO && Object.keys(newOwner.virtuals).length) {
+		return res.render(__dirname + "/target_not_pro_yet.html", {
+			username: he.encode(user.username),
+			target: he.encode(req.body.username),
+			vm_count: req.params.vm,
+			vm_name: he.encode(Object.keys(user.object.virtuals)[Number(req.params.vm)])
+		});
+	}
+	while (Object.keys(newOwner.virtuals).includes(our_vm)) our_vm = our_vm + " (FROM " + user.username + ")";
+	newOwner.virtuals[our_vm] = user.object.virtuals[Object.keys(user.object.virtuals)[Number(req.params.vm)]];
+	delete user.object.virtuals[Object.keys(user.object.virtuals)[Number(req.params.vm)]];
+	await db.set(user.username, user.object);
+	await db.set(req.body.username, newOwner);
+	res.redirect("/main");
+});
+
 app.post("/newInput/:vm", async function(req, res) {
     if (!req.cookies.token) {
 		return res.redirect("/");

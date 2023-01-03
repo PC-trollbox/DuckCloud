@@ -13,7 +13,7 @@
 		<a href="/manage" style="text-decoration: none;" class="logged-in-as">🚪 <nodejs-embed>username</nodejs-embed></a>
 		<h1>☁️ DuckCloud</h1>
 		<hr>
-		<a href="/" class="arrow">←</a> | <nodejs-embed>vm_name</nodejs-embed> | <a href="/shutoff/<nodejs-embed>vm_count</nodejs-embed>" onclick="document.body.insertAdjacentHTML('afterbegin','Do not click away! The page can be loading too long because Docker takes too long to stop a container.');"><nodejs-embed>switch</nodejs-embed></a> <a href="/burn/<nodejs-embed>vm_count</nodejs-embed>" onclick="return confirm('Are you sure?')">Remove VM</a>
+		<a href="/" class="arrow">←</a> | <nodejs-embed>vm_name</nodejs-embed> | <a href="/shutoff/<nodejs-embed>vm_count</nodejs-embed>" onclick="document.body.insertAdjacentHTML('afterbegin','Do not click away! The page can be loading too long because Docker takes too long to stop a container.');"><nodejs-embed>switch</nodejs-embed></a> <a href="/burn/<nodejs-embed>vm_count</nodejs-embed>" onclick="return confirm('Are you sure?')">Remove VM</a> <a href="/chown/<nodejs-embed>vm_count</nodejs-embed>">Change Owner</a>
 		<br>
 		Output latency: <label id="outlat">n/a </label>ms
 		<br>
