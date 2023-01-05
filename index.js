@@ -287,10 +287,10 @@ app.get("/shutoff/:vm", async function(req, res) {
 			});
 			all_features[user.object.virtuals[Object.keys(user.object.virtuals)[Number(req.params.vm)]]] = our_vm;
 		} catch {
+			all_features[user.object.virtuals[Object.keys(user.object.virtuals)[Number(req.params.vm)]]] = {
+				ats: true
+			};
 			if (state.State.Running) {
-				all_features[user.object.virtuals[Object.keys(user.object.virtuals)[Number(req.params.vm)]]] = {
-					ats: true
-				};
 				await container.stop();
 			}
 			return res.status(500).render(__dirname + "/failed_to_start.html", {
