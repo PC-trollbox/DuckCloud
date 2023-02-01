@@ -1,0 +1,44 @@
+<!DOCTYPE html>
+<html lang="en">
+	<head>
+	  <meta charset="UTF-8">
+	  <meta http-equiv="X-UA-Compatible" content="IE=edge">
+	  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+	  <title>Page(Create)@DuckCloud</title>
+	  <link rel="stylesheet" href="/regular.css"></link>
+	</head>
+	<body>
+		<a href="/manage" style="text-decoration: none;" class="logged-in-as">🚪 <nodejs-embed>username</nodejs-embed></a>
+		<h1>☁️ DuckCloud</h1>
+		<hr>
+		<form action="/newVM" method="post">
+			<a href="/" class="arrow">←</a>
+			<label>VM name</label>: <input name="vm_name" placeholder="CloudVM" required></input>
+			<br>
+			Linux distro: Debian (11 bullseye)
+			<br>
+			<input name="shouldHaveNetworking" onclick="NetworkingAgreement(this)" type="checkbox"></input> Enable networking
+			<br>
+			<input name="shouldUse512mbRAM" type="checkbox"></input> PRO: boost 128 MB of RAM to 512 MB of RAM
+			<br>
+			<button>Create</button>
+		</form>
+
+		<script>
+			function NetworkingAgreement(el) {
+				while (el.checked) {
+					let conf = confirm("Read and confirm the Networking Agreement.\n---\nQuick Reference: s1\n\nThe IP is gonna be PC's real IP. You can attempt a DoS or a DDoS attack but PC doesn't open a port + no allocated IP + IP is dynamic (changes every router restart)");
+					if (!conf) break;
+					conf = confirm("Read and confirm the Networking Agreement.\n---\nQuick Reference: s2\n\nYou are NOT allowed to hack anyone with the network assigned to you.\nSome sites are blocked because PC is russian and uses a russian ISP.");
+					if (!conf) break;
+					conf = confirm("Read and confirm the Networking Agreement.\n---\nQuick Reference: s3\n\nAvoid any blocked sites. You may use a VPN. But without a VPN you shouldn't do anything bad. You should try and use the Internet as you would use one in Russia.");
+					if (!conf) break;
+					conf = confirm("Read and confirm the Networking Agreement.\n---\n\nNow, do you accept this agreement? If not, the networking won't be enabled.");
+					if (!conf) break;
+					return;
+				}
+				if (el.checked) el.checked = false;
+			}
+		</script>
+	</body>
+</html>

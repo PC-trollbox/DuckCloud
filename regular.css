@@ -1,0 +1,66 @@
+body {
+    background-color: black;
+    color: white;
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+}
+
+a {
+    color: deepskyblue;
+}
+
+.object {
+    background-color: #373737;
+    position: relative;
+    left: 0px;
+    width: calc(100% - 32px);
+    padding: 16px;
+}
+
+.online-icon {
+    background-color: #82ff36;
+    color: #82ff36;
+    border-radius: 50%;
+    display: inline-block;
+    user-select: none;
+}
+
+.offline-icon {
+    background-color: #bd0036;
+    color: #bd0036;
+    border-radius: 50%;
+    display: inline-block;
+    user-select: none;
+}
+
+.manage-vm {
+    position: absolute;
+    right: 16px;
+    text-decoration: none;
+}
+
+.add-vm {
+    position: fixed;
+    bottom: 16px;
+    right: 16px;
+    padding: 16px;
+    background-color: #373737;
+    color: #82ff36;
+    border-radius: 50%;
+    text-decoration: none;
+}
+
+.arrow {
+    color: white;
+    padding-left: 4px;
+    padding-right: 4px;
+    background-color: #059def;
+    text-decoration: none;
+    font-weight: bolder;
+    font-size: large;
+}
+
+.logged-in-as {
+    position: fixed;
+    top: 16px;
+    right: 16px;
+}

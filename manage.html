@@ -1,0 +1,61 @@
+<!DOCTYPE html>
+<html lang="en">
+	<head>
+	  <meta charset="UTF-8">
+	  <meta http-equiv="X-UA-Compatible" content="IE=edge">
+	  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+	  <title>Page(Manage)@DuckCloud</title>
+	  <link rel="stylesheet" href="/regular.css"></link>
+	</head>
+	<body>
+		<a href="/logoff" style="text-decoration: none;" class="logged-in-as" title="Logs you off!">🚪 <nodejs-embed>username</nodejs-embed></a>
+		<h1>☁️ DuckCloud</h1>
+		<hr>
+		<a href="/" class="arrow">←</a>
+		Configuring DuckCloud protection measures (could lock you out!)
+		<hr>
+		<b>Log out</b> - Removes a token cookie.
+		<form action="/logoff">
+			<button>Log out</button>
+		</form>
+		<hr>
+		<b>Change password</b> - Changes the password and the token.
+		<form action="/changePassword" method="POST">
+			Old password: <input name="oldPassword" type="password" required></input>
+			<br>
+			New password: <input name="newPassword" type="password" required></input>
+			<br>
+			<button>Change the password</button>
+		</form>
+		<hr>
+		<b>Change token</b> - Changes the token without changing the password. Causes anyone logged into your account to get logged out. (useful if you got hacked from a DevTools script)
+		<form action="/changeToken" method="POST">
+			<button>Change the token</button>
+		</form>
+		<nodejs-embed>associatedCS</nodejs-embed>
+		<hr>
+		<b>Unlink from UltimateLogon</b> - You can unlink your UltimateLogon account from DuckCloud ID.
+		<form action="/ul_unlink" method="POST">
+			Password: <input name="password" type="password" required></input>
+			<br>
+			<button>Disassociate</button>
+			<br>
+			<em>If you forgot your password, it's great time for you to call PC#7105. Or if you have the rights to remove UltimateLogon but don't have the password, you can just remove the duckcloud_token property from the JSON of AppData.</em>
+		</form>
+		<nodejs-embed>associatedCE</nodejs-embed>
+		<hr>
+		<b>Toggle sharing</b> - Disable or enable sharing. If sharing is disabled, no one can transfer VMs to you and they will be presented with fake "no PRO" page.
+		<form action="/toggle_sharing" method="POST">
+			Setting: <b><nodejs-embed>disableSharing</nodejs-embed></b> (default: <b>no sharing</b>)
+			<br>
+			<button>Toggle sharing</button>
+		</form>
+		<hr>
+		<b>Destroy the account</b> - Irreversible action to remove main data associated with you. The VMs will be stopped and removed. The DuckCloud ID will appear registerable again. The VMs will take a while if you have them running, so don't click away.
+		<form action="/destroyAccount" method="POST">
+			Password: <input name="password" type="password" required></input>
+			<br>
+			<button onclick="return confirm('Are you really really sure?')">Destroy the account</button>
+		</form>
+	</body>
+</html>
