@@ -811,7 +811,7 @@ io.on("connection", async function(client) {
 		if (!Object.keys(user.object.virtuals)[Number(vm)]) return client.disconnect();
 		let a = all_features[user.object.virtuals[Object.keys(user.object.virtuals)[Number(vm)]]] || {ats: true};
 		if (a.ats) {
-			client.emit("data", "\r\nYour virtual machine is about to stop. To use this Linux console again, restart your VM.")
+			client.emit("datad", "\r\nYour virtual machine is about to stop. To use this Linux console again, restart your VM.")
 			return client.disconnect();
 		}
 		client.emit("datad", a.shell.toString());
