@@ -36,6 +36,9 @@
 			term._core._renderService.clear();
 			term.resize(term.cols, term.rows);
 			socket.emit("resize", term.cols, term.rows);
+			socket.on("reconnect", function() {
+				socket.emit("vmselect", "<nodejs-embed>vm_count</nodejs-embed>");
+			});
 			socket.on("datad", function(e) {
 				term.write(e);
 			});
