@@ -97,6 +97,12 @@ emitter = {
 		return this.workspaces[vm] || this.createWorkspace(vm);
 	},
 	removeWorkspace: function(vm) {
+		if (!this.workspaces[vm]) this.workspaces[vm] = {callbacks:{}};
+		if (this.workspaces[vm].callbacks.hasOwnProperty("deletion")) {
+			for (let callback of this.workspaces[vm].callbacks["deletion"]) {
+				callback("");
+			}
+		}
 		delete this.workspaces[vm];
 	}
 }
@@ -819,6 +825,11 @@ io.on("connection", async function(client) {
 		workspace.on("data", function(e) {
 			if (disconn) return;
 			client.emit("datad", e.toString());
+		});
+		workspace.on("deletion", function() {
+			if (disconn) return;
+			client.emit("datad", "\r\nYour virtual machine is about to stop. To use this Linux console again, restart your VM.")
+			return client.disconnect();
 		});
 		client.on("datad", function(e) {
 			a.started_shell.write(String(e));
