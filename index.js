@@ -689,7 +689,7 @@ app.post("/user_page", async function(req, res) {
 		user = await user.text();
 		await db.set(user, {
 			password: req.cookies.createfor_password,
-			token: genToken(16),
+			token: genToken(64),
 			virtuals: {},
 			isPRO: false,
 			assignedTo: token,
