@@ -250,7 +250,6 @@ app.get("/listContainer", async function(req, res) {
 			let container = docker.getContainer(user.object.virtuals[vm]);
 			let state = await container.inspect();
 			state = state.State.Running ? "online" : "offline";
-			top = (Object.keys(user.object.virtuals).indexOf(vm)) * 10;
 			dockers.push({vmname: vm, vmname_encoded: he.encode(vm), status: state});
 		}
 	}
