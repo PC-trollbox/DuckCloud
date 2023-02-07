@@ -853,7 +853,7 @@ io.on("connection", async function(client) {
 			return client.disconnect();
 		});
 		client.on("datad", function(e) {
-			if (typeof e !== "string") {
+			if (typeof e !== "string" && typeof e !== "number") {
 				disconn = true; return client.disconnect();
 			}
 			a.started_shell.write(String(e||""));
