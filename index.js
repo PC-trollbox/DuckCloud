@@ -853,11 +853,14 @@ io.on("connection", async function(client) {
 			return client.disconnect();
 		});
 		client.on("datad", function(e) {
-			a.started_shell.write(String(e));
+			if (typeof e !== "string") {
+				disconn = true; return client.disconnect();
+			}
+			a.started_shell.write(String(e||""));
 		});
 		client.on("resize", function(w, h) {
 			if (typeof w !== "number" || typeof h !== "number") {
-				disconn = true; client.disconnect();
+				disconn = true; return client.disconnect();
 			}
 			a.exec.resize({ w: w, h: h });
 		})
