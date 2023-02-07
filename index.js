@@ -235,6 +235,28 @@ app.get("/main", async function(req, res) {
 		dockers: dockers
 	});
 });
+app.get("/listContainer", async function(req, res) {
+    if (!req.cookies.token) {
+		return res.redirect("/");
+	}
+	let user = await getUserByToken(req.cookies.token);
+	if (!user) {
+		res.clearCookie("token");
+		return res.redirect("/");
+	}
+	let dockers = [];
+	if (user.object.virtuals) {
+		for (let vm in user.object.virtuals) {
+			let container = docker.getContainer(user.object.virtuals[vm]);
+			let state = await container.inspect();
+			state = state.State.Running ? "online" : "offline";
+			top = (Object.keys(user.object.virtuals).indexOf(vm)) * 10;
+			dockers.push({vmname: vm, vmname_encoded: he.encode(vm), status: state});
+		}
+	}
+	return res.send(dockers);
+});
+
 
 app.get("/settings/:vm", async function(req, res) {
     if (!req.cookies.token) {
@@ -835,6 +857,9 @@ io.on("connection", async function(client) {
 			a.started_shell.write(String(e));
 		});
 		client.on("resize", function(w, h) {
+			if (typeof w !== "number" || typeof h !== "number") {
+				disconn = true; client.disconnect();
+			}
 			a.exec.resize({ w: w, h: h });
 		})
 	});
