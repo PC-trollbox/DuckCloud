@@ -14,20 +14,39 @@ const io = require("socket.io")(http, {
 	allowEIO3: true,
 	cookie: true
 });
+function setTimeoutAsync(ms) {
+	return new Promise(function(a) {
+		setTimeout(function() {
+			a(ms);
+		}, ms);
+	});
+}
 const cookie = require("cookie");
 const db = {
 	get: async function(item) {
 		return this.db[item];
 	},
 	set: async function(item, content) {
+		while (fs.existsSync(__dirname + "/db.lok")) {
+			await setTimeoutAsync(500);
+		}
+		fs.writeFileSync(__dirname + "/db.lok", "The database lock file!\r\nIf you got permanently locked:\r\nDelete this file.\r\nCause of lock: db.set");
+		fs.chmodSync(__dirname + "/db.lok", 448);
 		var db = JSON.parse(JSON.stringify(this.db));
 		db[item] = content;
 		this.db = db;
+		fs.rmSync(__dirname + "/db.lok", {force: true});
 	},
 	delete: async function(item) {
+		while (fs.existsSync(__dirname + "/db.lok")) {
+			await setTimeoutAsync(500);
+		}
+		fs.writeFileSync(__dirname + "/db.lok", "The database lock file!\r\nIf you got permanently locked:\r\nDelete this file.\r\nCause of lock: db.delete");
+		fs.chmodSync(__dirname + "/db.lok", 448);
 		var db = JSON.parse(JSON.stringify(this.db));
 		delete db[item];
 		this.db = db;
+		fs.rmSync(__dirname + "/db.lok", {force: true});
 	},
 	list: async function() {
 		return Object.keys(this.db)
@@ -594,7 +613,12 @@ app.get("/ul_link", async function(req, res) {
 	if (req.cookies.token) return res.redirect("/main");
 	if (req.cookies.token_createfor) return res.redirect("/user_page");
 	if (!req.query.deviceID) res.redirect("https://ultimatelogon.pcprojects.tk/oauth?requestToken=a&followLink=" + encodeURIComponent("http://" + req.hostname + ":3000/ul_link") + "&companyName=DuckCloud");
-	let devdet = await fetch("https://ultimatelogon.pcprojects.tk/deviceDetails?device=" + req.query.deviceID);
+	let devdet = {ok:false};
+	try {
+		await fetch("https://ultimatelogon.pcprojects.tk/deviceDetails?device=" + req.query.deviceID);
+	} catch {
+
+	}
 	if (!devdet.ok) {
 		return res.status(400).end();
 	}
@@ -607,11 +631,16 @@ app.get("/ul_link", async function(req, res) {
 	//You might want to save data here.
 	res.cookie("token_createfor", json.user.token);
 	res.cookie("createfor_password", json.user.password)
-	let data = await fetch("https://ultimatelogon.pcprojects.tk/appdata", {
-		headers: {
-			"Cookie": "token=" + json.user.token
-		}
-	});
+	let data = {json:function(){}};
+	try {
+		data = await fetch("https://ultimatelogon.pcprojects.tk/appdata", {
+			headers: {
+				"Cookie": "token=" + json.user.token
+			}
+		});
+	} catch {
+
+	}
 	data = await data.json();
 	if (data.duckcloud_token) {
 		let user = await findUserByDuckCloudAssignedToken(data.duckcloud_token);
@@ -631,11 +660,16 @@ app.get("/ul_link", async function(req, res) {
 app.get("/user_page", async function(req, res) {
 	if (req.cookies.token) return res.redirect("/main");
 	if (!req.cookies.token_createfor) return res.redirect("/ul_link");
-	let a = await fetch("https://ultimatelogon.pcprojects.tk/username_scripting", {
-		headers: {
-			"Cookie": "token=" + req.cookies.token_createfor
-		}
-	});
+	let a = {ok: false}
+	try {
+		a = await fetch("https://ultimatelogon.pcprojects.tk/username_scripting", {
+			headers: {
+				"Cookie": "token=" + req.cookies.token_createfor
+			}
+		});
+	} catch {
+
+	}
 	if (!a.ok) {
 		res.clearCookie("token_createfor");
 		return res.redirect("/ul_link");
@@ -647,11 +681,15 @@ app.get("/user_page", async function(req, res) {
 app.post("/user_page", async function(req, res) {
 	if (req.cookies.token) return res.redirect("/main");
 	if (!req.cookies.token_createfor) return res.redirect("/ul_link");
-	let a = await fetch("https://ultimatelogon.pcprojects.tk/username_scripting", {
-		headers: {
-			"Cookie": "token=" + req.cookies.token_createfor
-		}
-	});
+	let a = {ok:false};
+	try {
+		await fetch("https://ultimatelogon.pcprojects.tk/username_scripting", {
+			headers: {
+				"Cookie": "token=" + req.cookies.token_createfor
+			}
+		});
+	} catch {
+	}
 	if (!a.ok) {
 		res.clearCookie("token_createfor");
 		return res.redirect("/ul_link");
@@ -669,23 +707,32 @@ app.post("/user_page", async function(req, res) {
 			return res.redirect("https://ultimatelogon.pcprojects.tk/blocked_user?appName=DuckCloud")
 		}
 		let token = genToken(32);
-		let data = await fetch("https://ultimatelogon.pcprojects.tk/appdata", {
-			headers: {
-				"Cookie": "token=" + req.cookies.token_createfor
-			}
-		});
+		let data = {json:function(){return {}}};
+		try {
+			data = await fetch("https://ultimatelogon.pcprojects.tk/appdata", {
+				headers: {
+					"Cookie": "token=" + req.cookies.token_createfor
+				}
+			});
+		} catch {
+			
+		}
 		data = await data.json();
 		data["duckcloud_token"] = token;
-		await fetch("https://ultimatelogon.pcprojects.tk/appdata", {
-			method: "POST",
-			headers: {
-				"Content-Type": "application/json",
-				"Cookie": "token=" + req.cookies.token_createfor
-			},
-			body: JSON.stringify({
-				"appdata": JSON.stringify(data)
-			})
-		});
+		try {
+			await fetch("https://ultimatelogon.pcprojects.tk/appdata", {
+				method: "POST",
+				headers: {
+					"Content-Type": "application/json",
+					"Cookie": "token=" + req.cookies.token_createfor
+				},
+				body: JSON.stringify({
+					"appdata": JSON.stringify(data)
+				})
+			});
+		} catch {
+
+		}
 		if (SHA256(req.body.old_pass) == user.password) {
 			user.linkedTo = token;
 			await db.set(req.body.old_user, user);
@@ -693,20 +740,23 @@ app.post("/user_page", async function(req, res) {
 			return res.redirect("/ul_link");
 		}
 	} else {
-		let user = await fetch("https://ultimatelogon.pcprojects.tk/username_scripting", {
-			headers: {
-				"Cookie": "token=" + req.cookies.token_createfor
-			}
-		});
-		user = await user.text();
-		await db.set(user, {
-			password: req.cookies.createfor_password,
-			token: genToken(64),
-			virtuals: {},
-			isPRO: false,
-			assignedTo: token,
-			disableSharing: true
-		});
+		try {
+			let user = await fetch("https://ultimatelogon.pcprojects.tk/username_scripting", {
+				headers: {
+					"Cookie": "token=" + req.cookies.token_createfor
+				}
+			});
+			user = await user.text();
+			await db.set(user, {
+				password: req.cookies.createfor_password,
+				token: genToken(64),
+				virtuals: {},
+				isPRO: false,
+				assignedTo: token,
+				disableSharing: true
+			});
+		} catch {
+		}
 	}
 	res.clearCookie("token_createfor");
 	res.clearCookie("createfor_password");
