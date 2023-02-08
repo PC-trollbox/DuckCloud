@@ -21,9 +21,13 @@
 		<textarea id="copypaste" placeholder="Copy-paste box" title="Use this for copy-pasting purposes."></textarea>
 		<script>
 			let socket = io();
-			socket.emit("vmselect", "<nodejs-embed>vm_count</nodejs-embed>");
 			let term = new Terminal();
         	term.open(document.getElementById('term'));
+			term.clear();
+			term._core._renderService.clear();
+			term.resize(term.cols, term.rows);
+			socket.emit("resize", term.cols, term.rows);
+			socket.emit("vmselect", "<nodejs-embed>vm_count</nodejs-embed>");
 			let info = "";
 			let current_routine = false; //reason: mobile phone users can't use the terminal
 			function wait(ms) {
@@ -33,10 +37,11 @@
 					}, ms)
 				});
 			}
-			term._core._renderService.clear();
-			term.resize(term.cols, term.rows);
-			socket.emit("resize", term.cols, term.rows);
 			socket.on("reconnect", function() {
+				term.clear();
+				term._core._renderService.clear();
+				term.resize(term.cols, term.rows);
+				socket.emit("resize", term.cols, term.rows);
 				socket.emit("vmselect", "<nodejs-embed>vm_count</nodejs-embed>");
 			});
 			socket.on("datad", function(e) {

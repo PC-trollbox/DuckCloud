@@ -64,3 +64,19 @@ a {
     top: 16px;
     right: 16px;
 }
+
+.apis-notice {
+    position: absolute;
+    left: 50%;
+}
+
+code {
+    background: #373737;
+}
+
+pre {
+    border: 16px solid #373737;
+    background: black;
+    display: block;
+    width: calc(100% - 32px);
+}

@@ -373,9 +373,18 @@ app.get("/shutoff/:vm", async function(req, res) {
 			our_vm.exec = await container.exec({Cmd: ['/bin/bash'], Tty: true, AttachStdin: true, AttachStdout: true, AttachStderr: true, Privileged: true });
 			our_vm.started_shell = await our_vm.exec.start({ Tty: true, stdin: true });
 			our_vm.started_shell.on("data", function(a) {
-				our_vm.shell = Buffer.concat([our_vm.shell, a]);
-				d.emit("data", a);
-				all_features[user.object.virtuals[Object.keys(user.object.virtuals)[Number(req.params.vm)]]] = our_vm;
+				if ((our_vm.shell.length + a) < require("buffer").constants.MAX_STRING_LENGTH) {
+					our_vm.shell = Buffer.concat([our_vm.shell, a]);
+					d.emit("data", a);
+					if (our_vm.shell.toString().includes("\x1b[H\x1b[2J")) {
+						our_vm.shell = Buffer.from(our_vm.shell.toString().split("\x1b[H\x1b[2J")[our_vm.shell.toString().split("\x1b[H\x1b[2J").length - 1]);
+					}
+					all_features[user.object.virtuals[Object.keys(user.object.virtuals)[Number(req.params.vm)]]] = our_vm;
+				} else {
+					if (a < require("buffer").constants.MAX_STRING_LENGTH) {
+						our_vm.shell = Buffer.from("Required cleaning of shell by Node.JS limits.\r\n" + a);
+					}
+				}
 			});
 			our_vm.started_shell.on("end", async function() {
 				our_vm.ats = true;
@@ -481,7 +490,8 @@ app.get("/sendInput/:vm", async function(req, res) {
 	if (our_vm.ats) {
 		return res.send("\r\nYour virtual machine is about to stop. To use this Linux console again, restart your VM.");
 	}
-	our_vm.started_shell.write(req.query.new);
+	if (typeof req.query.new !== "string") return res.send("soft fail");
+	our_vm.started_shell.write(String(req.query.new || "") || "");
 	res.send("ok");
 });
 
@@ -500,6 +510,8 @@ app.get("/resize/:vm", async function(req, res) {
 	if (our_vm.ats) {
 		return res.send("\r\nYour virtual machine is about to stop. To use this Linux console again, restart your VM.");
 	}
+	if (isNaN(Number(req.query.w)) || !isFinite(Number(req.query.w))) return res.send("soft fail");
+	if (isNaN(Number(req.query.h)) || !isFinite(Number(req.query.h))) return res.send("soft fail");
 	our_vm.exec.resize({ w: req.query.w, h: req.query.h });
 	res.send("ok");
 });
@@ -556,7 +568,7 @@ app.post("/newVM", async function(req, res) {
 		NetworkDisabled: ((req.body.shouldHaveNetworking || "off") == "off"),
 		HostConfig: {
 			Memory: ((req.body.shouldUse512mbRAM || "off") == "on") ? 536870912 : 134217728,
-			MemorySwap: ((req.body.shouldUse512mbRAM || "off") == "on") ?  537919488 : 135266304
+			MemorySwap: ((req.body.shouldUse512mbRAM || "off") == "on") ? 537919488 : 135266304
 		}
 	});
 	let red = await d.inspect();
@@ -825,6 +837,20 @@ app.get("/xterm/css/xterm.css", function(req, res) {
 	res.sendFile(__dirname + "/node_modules/xterm/css/xterm.css");
 });
 
+app.get("/apidocs", async function(req, res) {
+	if (!req.cookies.token) {
+		return res.redirect("/");
+	}
+	let user = await getUserByToken(req.cookies.token);
+	if (!user) {
+		res.clearCookie("token");
+		return res.redirect("/");
+	}
+	res.render(__dirname + "/apidocs.html", {
+		username: he.encode(user.username)
+	});
+});
+
 io.on("connection", async function(client) {
 	if (!client.handshake.headers.cookie) return client.disconnect();
 	if (!cookie.parse(client.handshake.headers.cookie).token) return client.disconnect();
@@ -838,10 +864,18 @@ io.on("connection", async function(client) {
 		if (!Object.keys(user.object.virtuals)[Number(vm)]) return client.disconnect();
 		let a = all_features[user.object.virtuals[Object.keys(user.object.virtuals)[Number(vm)]]] || {ats: true};
 		if (a.ats) {
-			client.emit("datad", "\r\nYour virtual machine is about to stop. To use this Linux console again, restart your VM.")
+			client.emit("datad", "\r\nYour virtual machine is about to stop. To use this Linux console again, restart your VM.");
 			return client.disconnect();
 		}
-		client.emit("datad", a.shell.toString());
+		if (a.shell.length > 131072) {
+			client.emit("datad", "DuckCloud VM buffer cleaning recommended. Please do a `clear` command as soon as possible. Only the last 128kb of shell will be sent.\r\n");
+			let shl = a.shell.toString();
+			shl = shl.match(/.{1,131072}/g);
+			shl = shl[shl.length - 1];
+			client.emit("datad", shl);
+		} else {
+			client.emit("datad", a.shell.toString());
+		}
 		let workspace = emitter.goToWorkspace(user.object.virtuals[Object.keys(user.object.virtuals)[Number(vm)]]);
 		workspace.on("data", function(e) {
 			if (disconn) return;

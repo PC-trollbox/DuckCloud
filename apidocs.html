@@ -1,0 +1,260 @@
+<!DOCTYPE html>
+<html lang="en">
+	<head>
+	  <meta charset="UTF-8">
+	  <meta http-equiv="X-UA-Compatible" content="IE=edge">
+	  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+	  <title>Page(CloudAPI)@DuckCloud</title>
+	  <link rel="stylesheet" href="/regular.css"></link>
+	</head>
+	<body>
+		<a href="/manage" style="text-decoration: none;" class="logged-in-as">🚪 <nodejs-embed>username</nodejs-embed></a>
+		<h1>☁️ DuckCloud</h1>
+		<hr>
+		<a href="/main" class="arrow">←</a> | <b>DuckCloud APIs</b>
+        <br>
+        The API is free for everybody to use.
+        <br>
+        By the way, DuckCloud is COMPLETELY open-<a href="https://github.com/PC-trollbox/DuckCloud">source</a>, and you can host it on your computer! (linux is better for selfhosting)
+        <hr>
+        Your application logs in with a <code>Cookie</code> header - with a <code>token</code> cookie. This is applicable for both HTTP and Socket.IO APIs. The value for <code>Cookie</code> header if the user's token is abcdlol:
+        <pre>token=abcdlol</pre>
+        <hr>
+        <h2>HTTP API</h2>
+        This is the main part of the API.
+        <br>
+        <h3>GET <a href="/">/</a></h3>
+        Redirects the user to /main if they are logged in, otherwise prompts to log in.
+        <hr>
+        <h3>GET <a href="/register">/register</a></h3>
+        Redirects the user to /main if they are logged in, otherwise prompts to register an account.
+        <hr>
+        <h3>POST /register</h3>
+        Params: encode in JSON or URLencoded
+        <br>
+        <code>username</code> - DuckCloud ID.
+        <br>
+        <code>password</code> - DuckCloud secret.
+        <br>
+        Creates an account, or redirects the user to /main if they are logged in.
+        <hr>
+        <h3>POST /login</h3>
+        Params: encode in JSON or URLencoded
+        <br>
+        <code>username</code> - DuckCloud ID.
+        <br>
+        <code>password</code> - DuckCloud secret.
+        <br>
+        Puts a <code>token</code> cookie if the user has successfully logged in, or redirects the user to /main if they are logged in.
+        <hr>
+        <h3>GET <a href="/main">/main</a></h3>
+        <em>This operation requires proper logon. Users will get redirected to / if they have an incorrect token or didn't log in yet.</em>
+        <br>
+        Shows a GUI with all the VMs. Your application can still request a computer-readable list without worrying about parsing HTML.
+        <hr>
+        <h3>GET <a href="/listContainer">/listContainer</a></h3>
+        <em>This operation requires proper logon. Users will get redirected to / if they have an incorrect token or didn't log in yet.</em>
+        <br>
+        Sends computer-readable list of VMs. For example:
+        <pre>[
+    {
+        "vmname": "MyVM",
+        "vmname_encoded": "MyVM",
+        "status": "offline"
+    },
+    {
+        "vmname": "OurVM",
+        "vmname_encoded": "OurVM",
+        "status": "online"
+    }
+]</pre>
+        <hr>
+        <h3>GET <a href="/settings/0">/settings/:vmNumber</a></h3>
+        <em>This operation requires proper logon. Users will get redirected to / if they have an incorrect token or didn't log in yet.</em>
+        <br>
+        Shows a GUI control panel for managing a VM.
+        <hr>
+        <h3>GET <a href="javascript:alert('operation blocked: too dangerous')">/burn/:vmNumber</a></h3>
+        <em>This operation requires proper logon. Users will get redirected to / if they have an incorrect token or didn't log in yet.</em>
+        <br>
+        Removes a specified VM
+        <hr>
+        <h3>GET <a href="/shutoff/0">/shutoff/:vmNumber</a></h3>
+        <em>This operation requires proper logon. Users will get redirected to / if they have an incorrect token or didn't log in yet.</em>
+        <br>
+        Turns on or turns off a VM. May block the operation - shutting down takes a long time. <em>(fix this, docker!)</em>
+        <br>
+        If launching failed (like if the user tried to remove all the binaries), a launching failed page will be shown. Otherwise redirects to /main.
+        <hr>
+        <h3>GET <a href="/chown/0">/chown/:vmNumber</a></h3>
+        <em>This operation requires proper logon. Users will get redirected to / if they have an incorrect token or didn't log in yet.</em>
+        <br>
+        Shows a GUI transferring panel where the user can change ownership of a VM.
+        <hr>
+        <h3>POST /chown/:vmNumber</h3>
+        <em>This operation requires proper logon. Users will get redirected to / if they have an incorrect token or didn't log in yet.</em>
+        <br>
+        Params: encode in JSON or URLencoded
+        <br>
+        <code>username</code> - DuckCloud ID of the new owner.
+        <br>
+        Changes ownership of a VM. The new owner must have sharing enabled in their <a href="/manage">settings</a> and also (if has no PRO flag) must have no VMs.
+        <br>
+        If the operation succeeds, will redirect to /main.
+        <hr>
+        <h3>POST /newInput/:vmNumber</h3>
+        <em>This operation requires proper logon. Users will get redirected to / if they have an incorrect token or didn't log in yet.</em>
+        <br>
+        Good news: there are no parameters required for this call!
+        <br>
+        Gets the shell output. If the input is larger than Node.JS can allow, sorry, the shell is crashed unless your application uses Socket.IO API.
+        <hr>
+        <h3>GET <a href="/sendInput/0?new=meow">/sendInput/:vmNumber</a></h3>
+        <em>This operation requires proper logon. Users will get redirected to / if they have an incorrect token or didn't log in yet.</em>
+        <br>
+        Params: send as HTTP query
+        <br>
+        <code>new</code> - the input to send
+        <br>
+        Sends characters to the shell.
+        <hr>
+        <h3>GET <a href="/resize/0?w=40&h=12">/resize/:vmNumber</a></h3>
+        <em>This operation requires proper logon. Users will get redirected to / if they have an incorrect token or didn't log in yet.</em>
+        <br>
+        Params: send as HTTP query
+        <br>
+        <code>w</code> - Width (columns)
+        <br>
+        <code>h</code> - Height (rows)
+        <br>
+        Tells the pty to adapt to the new dimensions - for example sets process.stdout.columns in Node.JS.
+        <hr>
+        <h3>GET <a href="/newVM">/newVM</a></h3>
+        <em>This operation requires proper logon. Users will get redirected to / if they have an incorrect token or didn't log in yet.</em>
+        <br>
+        Opens a GUI with VM creation tools, or sends a 400 error with "PRO needed for multiple VMs" page  
+        <hr>
+        <h3>POST /newVM</h3>
+        <em>This operation requires proper logon. Users will get redirected to / if they have an incorrect token or didn't log in yet.</em>
+        <br>
+        Params: encode in JSON or URLencoded
+        <br>
+        <code>vm_name</code> - The VM name.
+        <br>
+        <code>shouldHaveNetworking</code> - Enable networking in the container.
+        <br>
+        <code>shouldUse512mbRAM</code> - PRO feature to boost the VM RAM to allow more programs to be used.
+        <br>
+        Redirects your application back to /newVM if the user (or your application) has already created this VM with name, redirects your application to /main if succeeded, or crashes with 400 if boost option selected without PRO.
+        <hr>
+        <h3>GET <a href="/logoff">/logoff</a></h3>
+        <em>This operation requires proper logon. Users will get redirected to / if they have an incorrect token or didn't log in yet.</em>
+        <br>
+        Removes the <code>token</code> cookie, and redirects to /.
+        <hr>
+        <b style="color: #00ff00;">// Warning! DuckCloud integration with UltimateLogon STARTS HERE. These features are MEANT to be used by PEOPLE. Bots shouldn't rely on them - just use the POST /register, and everyone will understand you.</b>
+        <hr>
+        <h3>GET <a href="/ul_link">/ul_link</a></h3>
+        Does <b>three</b> things:
+        <br>
+        1. Request the user for UltimateLogon authentication.
+        <br>
+        2. Logs into the user's linked account OR prompts user to link/create an account. (if blocked by server administrator, it just redirects to <a href="https://ultimatelogon.pcprojects.tk/blocked_user?appName=DuckCloud">https://ultimatelogon.pcprojects.tk/blocked_user?appName=DuckCloud</a> and refuses to log in)
+        <br>
+        3. Redirects the user to /main if they are logged in.
+        <hr>
+        <h3>GET <a href="/user_page">/user_page</a></h3>
+        Redirects the user to /main if they are logged in, otherwise prompts the user to select linking type (<code>link</code> or <code>new</code>)
+        <hr>
+        <h3>POST /user_page</h3>
+        Params: encode in JSON or URLencoded
+        <br>
+        <code>account_type</code> - Linking type (<code>link</code> or <code>new</code>, lowercase)
+        <br>
+        <code>old_user</code> - DuckCloud ID of user, if <code>link</code> linking type selected.
+        <br>
+        <code>old_pass</code> - DuckCloud secret of user, if <code>link</code> linking type selected.
+        <br>
+        Redirects the user to /main if they are logged in, otherwise does the configuration the user specified and returns to /.
+        <hr>
+        <h3>POST /ul_unlink</h3>
+        <em>This operation requires proper logon. Users will get redirected to / if they have an incorrect token or didn't log in yet.</em>
+        <br>
+        Params: encode in JSON or URLencoded
+        <br>
+        <code>password</code> - DuckCloud secret for confirmation of identity.
+        <br>
+        Redirects the user to /main if they are logged in, otherwise does the configuration the user specified and returns to /.
+        <hr>
+        <b style="color: #00ff00;">// DuckCloud integration with UltimateLogon ENDS HERE. Bots the endpoints declared here.</b>
+        <hr>
+        <h3>GET <a href="/manage">/manage</a></h3>
+        <em>This operation requires proper logon. Users will get redirected to / if they have an incorrect token or didn't log in yet.</em>
+        <br>
+        Allows the user to manage security options in a GUI: change password and token, remove account, enable or disable sharing, unlink from UltimateLogon.
+        <hr>
+        <h3>POST /changePassword</h3>
+        <em>This operation requires proper logon. Users will get redirected to / if they have an incorrect token or didn't log in yet.</em>
+        <br>
+        Params: encode in JSON or URLencoded
+        <br>
+        <code>oldPassword</code> - current DuckCloud secret for confirmation of identity.
+        <br>
+        <code>newPassword</code> - new DuckCloud secret that will be set.
+        <br>
+        The user's token and password will be changed on successful launch of /changePassword.
+        <hr>
+        <h3>POST /destroyAccount</h3>
+        <em>This operation requires proper logon. Users will get redirected to / if they have an incorrect token or didn't log in yet.</em>
+        <br>
+        Params: encode in JSON or URLencoded
+        <br>
+        <code>password</code> - current DuckCloud secret for confirmation of identity.
+        <br>
+        The user's VMs and account will be permanently removed off DuckCloud.
+        <hr>
+        <h3>POST /changeToken</h3>
+        <em>This operation requires proper logon. Users will get redirected to / if they have an incorrect token or didn't log in yet.</em>
+        <br>
+        The user's token will be changed without affecting the password. Redirects to / on success.
+        <hr>
+        <h3>POST /toggle_sharing</h3>
+        <em>This operation requires proper logon. Users will get redirected to / if they have an incorrect token or didn't log in yet.</em>
+        <br>
+        The user's sharing option will be toggled on or off.
+        <hr>
+        <h3>GET <a href="/xterm/lib/xterm.js">/xterm/lib/xterm.js</a></h3>
+        The source code for xterm - the JavaScript part.
+        <hr>
+        <h3>GET <a href="/xterm/css/xterm.css">/xterm/css/xterm.css</a></h3>
+        The source code for xterm - the CSS part.
+        <hr>
+        <h3>GET <a href="/apidocs">/apidocs</a></h3>
+        <em>This operation requires proper logon. Users will get redirected to / if they have an incorrect token or didn't log in yet.</em>
+        <br>
+        The official API documentation.
+        <hr>
+        <h2>Socket.IO API</h2>
+        You should use THIS for I/O on the user's VMs, not the HTTP calls - as HTTP can be easily damaged and it's not that fast as you think.
+        <br>
+        Any bad Socket.IO API call - and you get disconnected. This is a protection measure - the servers should be mostly up.
+        <hr>
+        <h3><code>emit("vmselect", Number vmNumber)</code></h3>
+        <br>
+        Registers your client for usage with the selected VM. Can only be called once!
+        <hr>
+        <h3><code>on("datad", receive String data)</code></h3>
+        <br>
+        The shell output. If the input is larger than Node.JS can allow, the connection lives on and everyone's happy, however you should clear your screen asap.
+        <hr>
+        <h3><code>emit("datad", String data)</code></h3>
+        <br>
+        Sends characters to the shell.
+        <hr>
+        <h3><code>emit("resize", Number w, Number h)</code></h3>
+        <br>
+        Tells the pty to adapt to the new dimensions - for example sets process.stdout.columns in Node.JS.
+        <hr>
+        <b style="color: #00ff00;">// The API documentation stops HERE.</b>
+	</body>
+</html>
