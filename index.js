@@ -615,9 +615,8 @@ app.get("/ul_link", async function(req, res) {
 	if (!req.query.deviceID) res.redirect("https://ultimatelogon.pcprojects.tk/oauth?requestToken=a&followLink=" + encodeURIComponent("http://" + req.hostname + ":3000/ul_link") + "&companyName=DuckCloud");
 	let devdet = {ok:false};
 	try {
-		await fetch("https://ultimatelogon.pcprojects.tk/deviceDetails?device=" + req.query.deviceID);
-	} catch {
-
+		devdet = await fetch("https://ultimatelogon.pcprojects.tk/deviceDetails?device=" + req.query.deviceID);
+	} catch (e) {
 	}
 	if (!devdet.ok) {
 		return res.status(400).end();
@@ -683,7 +682,7 @@ app.post("/user_page", async function(req, res) {
 	if (!req.cookies.token_createfor) return res.redirect("/ul_link");
 	let a = {ok:false};
 	try {
-		await fetch("https://ultimatelogon.pcprojects.tk/username_scripting", {
+		a = await fetch("https://ultimatelogon.pcprojects.tk/username_scripting", {
 			headers: {
 				"Cookie": "token=" + req.cookies.token_createfor
 			}
