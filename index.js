@@ -392,7 +392,7 @@ app.get("/shutoff/:vm", async function(req, res) {
 			our_vm.exec = await container.exec({Cmd: ['/bin/bash'], Tty: true, AttachStdin: true, AttachStdout: true, AttachStderr: true, Privileged: true });
 			our_vm.started_shell = await our_vm.exec.start({ Tty: true, stdin: true });
 			our_vm.started_shell.on("data", function(a) {
-				if ((our_vm.shell.length + a) < require("buffer").constants.MAX_STRING_LENGTH) {
+				if ((our_vm.shell.length + a.length) < require("buffer").constants.MAX_STRING_LENGTH) {
 					our_vm.shell = Buffer.concat([our_vm.shell, a]);
 					d.emit("data", a);
 					if (our_vm.shell.toString().includes("\x1b[H\x1b[2J")) {
@@ -400,7 +400,7 @@ app.get("/shutoff/:vm", async function(req, res) {
 					}
 					all_features[user.object.virtuals[Object.keys(user.object.virtuals)[Number(req.params.vm)]]] = our_vm;
 				} else {
-					if (a < require("buffer").constants.MAX_STRING_LENGTH) {
+					if (a.length < require("buffer").constants.MAX_STRING_LENGTH) {
 						our_vm.shell = Buffer.from("Required cleaning of shell by Node.JS limits.\r\n" + a);
 					}
 				}
