@@ -107,7 +107,7 @@
         <br>
         Good news: there are no parameters required for this call!
         <br>
-        Gets the shell output. If the input is larger than Node.JS can allow, sorry, the shell is crashed unless your application uses Socket.IO API.
+        Gets the shell output.
         <hr>
         <h3>GET <a href="/sendInput/0?new=meow">/sendInput/:vmNumber</a></h3>
         <em>This operation requires proper logon. Users will get redirected to / if they have an incorrect token or didn't log in yet.</em>
@@ -245,7 +245,7 @@
         <hr>
         <h3><code>on("datad", receive String data)</code></h3>
         <br>
-        The shell output. If the input is larger than Node.JS can allow, the connection lives on and everyone's happy, however you should clear your screen asap.
+        The shell output.
         <hr>
         <h3><code>emit("datad", String data)</code></h3>
         <br>
