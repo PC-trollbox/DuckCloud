@@ -401,7 +401,7 @@ app.get("/shutoff/:vm", async function(req, res) {
 					all_features[user.object.virtuals[Object.keys(user.object.virtuals)[Number(req.params.vm)]]] = our_vm;
 				} else {
 					if (a.length < require("buffer").constants.MAX_STRING_LENGTH) {
-						our_vm.shell = Buffer.from("Required cleaning of shell by Node.JS limits.\r\n" + a);
+						our_vm.shell = Buffer.concat([Buffer.from("Required cleaning of shell by Node.JS limits.\r\n"), a]);
 					}
 				}
 			});
