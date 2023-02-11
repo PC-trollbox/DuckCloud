@@ -572,11 +572,17 @@ app.post("/newVM", async function(req, res) {
 	if (!user.object.isPRO && (req.body.shouldUse512mbRAM || "off") == "on") {
 		return res.status(400).end();
 	}
+	if (!req.body.distro) {
+		return res.status(400).end();
+	}
 
 	if (!req.body.vm_name) return res.redirect("/newVM");
 	if (Object.keys(user.object.virtuals).includes(req.body.vm_name)) return res.redirect("/newVM");
+	let distribs = ["debian", "archlinux"];
+	if (!distribs.includes(req.body.distro)) return res.status(400).end();
+
 	let d = await docker.createContainer({
-		Image: 'debian',
+		Image: req.body.distro,
 		AttachStdin: false,
 		AttachStdout: true,
 		AttachStderr: true,

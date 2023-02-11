@@ -15,7 +15,10 @@
 			<a href="/" class="arrow">←</a>
 			<label>VM name</label>: <input name="vm_name" placeholder="CloudVM" required></input>
 			<br>
-			Linux distro: Debian (11 bullseye)
+			Linux distro: <select name="distro" required>
+				<option value="debian" selected>Debian (11 bullseye)</option>
+				<option value="archlinux">Arch Linux (btw; 2023.02.01)</option>
+			</select>
 			<br>
 			<input name="shouldHaveNetworking" onclick="NetworkingAgreement(this)" type="checkbox"></input> Enable networking
 			<br>
