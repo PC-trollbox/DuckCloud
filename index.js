@@ -246,7 +246,7 @@ app.get("/main", async function(req, res) {
 			let state = await container.inspect();
 			state = state.State.Running ? "online" : "offline";
 			top = (Object.keys(user.object.virtuals).indexOf(vm)) * 10;
-			dockers = dockers + "<a class=\"object vmsetlink\" href=\"/settings/" + Object.keys(user.object.virtuals).indexOf(vm) + "\" style=\"position: relative; top: " + top + "px;\"><b>" + he.encode(vm) + " </b><div class=\"" + state + "-icon\">dk</div><label class=\"arrow manage-vm\">→</label></a>";
+			dockers = dockers + "<a class=\"object vmsetlink\" href=\"/settings/" + Object.keys(user.object.virtuals).indexOf(vm) + "\" style=\"position: relative; top: " + top + "px;\"><b>" + he.encode(vm) + " </b><span class=\"" + state + "-icon\"></span><label class=\"arrow manage-vm\">→</label></a>";
 		}
 	}
     res.render(__dirname + "/template.html", {
