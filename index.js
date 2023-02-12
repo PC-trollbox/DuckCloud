@@ -246,7 +246,7 @@ app.get("/main", async function(req, res) {
 			let state = await container.inspect();
 			state = state.State.Running ? "online" : "offline";
 			top = (Object.keys(user.object.virtuals).indexOf(vm)) * 10;
-			dockers = dockers + "<a class=\"object vmsetlink\" href=\"/settings/" + Object.keys(user.object.virtuals).indexOf(vm) + "\" style=\"position: relative; top: " + top + "px;\"><b>" + he.encode(vm) + " </b><div class=\"" + state + "-icon\">dk</div><label class=\"arrow manage-vm\">→</label></a>";
+			dockers = dockers + "<a class=\"object vmsetlink\" href=\"/settings/" + Object.keys(user.object.virtuals).indexOf(vm) + "\" style=\"position: relative; top: " + top + "px;\"><b>" + he.encode(vm) + " </b><span class=\"" + state + "-icon\"></span><label class=\"arrow manage-vm\">→</label></a>";
 		}
 	}
     res.render(__dirname + "/template.html", {
@@ -474,6 +474,48 @@ app.post("/chown/:vm", async function(req, res) {
 	await db.set(user.username, user.object);
 	await db.set(req.body.username, newOwner);
 	res.redirect("/main");
+});
+
+app.get("/ren/:vm", async function(req, res) {
+    if (!req.cookies.token) {
+		return res.redirect("/");
+	}
+	let user = await getUserByToken(req.cookies.token);
+	if (!user) {
+		res.clearCookie("token");
+		return res.redirect("/");
+	}
+	if (!Object.keys(user.object.virtuals)[Number(req.params.vm)]) return res.redirect("/main");
+    res.render(__dirname + "/rename.html", {
+		username: he.encode(user.username),
+		vm_count: req.params.vm,
+		vm_name: he.encode(Object.keys(user.object.virtuals)[Number(req.params.vm)])
+	});
+});
+
+app.post("/ren/:vm", async function(req, res) {
+    if (!req.cookies.token) {
+		return res.redirect("/");
+	}
+	let user = await getUserByToken(req.cookies.token);
+	if (!user) {
+		res.clearCookie("token");
+		return res.redirect("/");
+	}
+	if (!Object.keys(user.object.virtuals)[Number(req.params.vm)]) return res.redirect("/main");
+	let our_vm = Object.keys(user.object.virtuals)[Number(req.params.vm)];
+	while (Object.keys(user.object.virtuals).includes(our_vm)) our_vm = our_vm + " (1)";
+	let virtuals2 = {};
+	for (let virtual in user.object.virtuals) {
+		if (Object.keys(user.object.virtuals).indexOf(virtual) == req.params.vm) {
+			virtuals2[String(req.body.vmname)] = user.object.virtuals[virtual];
+		} else {
+			virtuals2[virtual] = user.object.virtuals[virtual];
+		}
+	}
+	user.object.virtuals = virtuals2;
+	await db.set(user.username, user.object);
+	res.redirect("/settings/" + req.params.vm);
 });
 
 app.post("/newInput/:vm", async function(req, res) {
@@ -904,6 +946,10 @@ app.get("/apidocs", async function(req, res) {
 	res.render(__dirname + "/apidocs.html", {
 		username: he.encode(user.username)
 	});
+});
+
+app.use(function(req, res) {
+	res.sendFile(__dirname + "/not_found.html");
 });
 
 io.on("connection", async function(client) {

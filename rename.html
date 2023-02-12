@@ -4,17 +4,22 @@
 	  <meta charset="UTF-8">
 	  <meta http-equiv="X-UA-Compatible" content="IE=edge">
 	  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-	  <title>Page(Main)@DuckCloud</title>
+	  <title>Page(ReName)@DuckCloud</title>
 	  <link rel="stylesheet" href="/regular.css"></link>
 	</head>
 	<body>
-		<a href="/apidocs" class="apis-notice">Use DuckCloud API!</a>
 		<a href="/manage" style="text-decoration: none;" class="logged-in-as">🚪 <nodejs-embed>username</nodejs-embed></a>
 		<h1>☁️ DuckCloud</h1>
 		<hr>
-		<nodejs-embed>dockers</nodejs-embed>
-		<a class="add-vm" href="/newVM">
-			<label class="add-vm-content">+</label>
-		</a>
+		<a href="/settings/<nodejs-embed>vm_count</nodejs-embed>" class="arrow">←</a> | <nodejs-embed>vm_name</nodejs-embed>
+		<br>
+		<b>Rename your VM</b>
+		<form action="/ren/<nodejs-embed>vm_count</nodejs-embed>" method="post">
+			Rename your VM here.
+			<hr>
+			New Name: <input name="vmname" placeholder="New VM name" required></input>
+			<hr>
+			<button>Rename</button>
+		</form>
 	</body>
 </html>

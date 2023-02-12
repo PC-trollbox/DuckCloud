@@ -102,6 +102,20 @@
         <br>
         If the operation succeeds, will redirect to /main.
         <hr>
+        <h3>GET <a href="/ren/0">/ren/:vmNumber</a></h3>
+        <em>This operation requires proper logon. Users will get redirected to / if they have an incorrect token or didn't log in yet.</em>
+        <br>
+        Shows a GUI renaming panel where the user can change name of a VM, similar to the /chown/ panel.
+        <hr>
+        <h3>POST /ren/:vmNumber</h3>
+        <em>This operation requires proper logon. Users will get redirected to / if they have an incorrect token or didn't log in yet.</em>
+        <br>
+        Params: encode in JSON or URLencoded
+        <br>
+        <code>vmname</code> - New VM name
+        <br>
+        Changes VM name. Attempts redirecting to /settings/:vmNumber on success.
+        <hr>
         <h3>POST /newInput/:vmNumber</h3>
         <em>This operation requires proper logon. Users will get redirected to / if they have an incorrect token or didn't log in yet.</em>
         <br>

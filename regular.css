@@ -20,18 +20,26 @@ a {
 
 .online-icon {
     background-color: #82ff36;
-    color: #82ff36;
+    width: 18px;
+    height: 18px;
     border-radius: 50%;
     display: inline-block;
     user-select: none;
+    position: absolute;
+    top: 50%;
+    transform: translate(50%, -50%);
 }
 
 .offline-icon {
     background-color: #bd0036;
-    color: #bd0036;
+    width: 18px;
+    height: 18px;
     border-radius: 50%;
     display: inline-block;
     user-select: none;
+    position: absolute;
+    top: 50%;
+    transform: translate(50%, -50%);
 }
 
 .manage-vm {
@@ -45,10 +53,19 @@ a {
     bottom: 16px;
     right: 16px;
     padding: 16px;
+    height: 16px;
+    width: 16px;
     background-color: #373737;
     color: #82ff36;
     border-radius: 50%;
     text-decoration: none;
+}
+
+.add-vm-content {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
 }
 
 .arrow {
