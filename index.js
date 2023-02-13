@@ -325,7 +325,9 @@ app.get("/burn/:vm", async function(req, res) {
 				}
 				user.object.virtuals = newList;
 				await db.set(user.username, user.object);
-				await container.stop();
+				try {
+					await container.stop();
+				} catch {}
 			} else {
 				return res.redirect("/settings/" + req.params.vm);
 			}
@@ -341,7 +343,9 @@ app.get("/burn/:vm", async function(req, res) {
 			}
 			user.object.virtuals = newList;
 			await db.set(user.username, user.object);
-			await container.stop();
+			try {
+				await container.stop();
+			} catch {}
 		}
 	}
 	if (!wasAlrRem) {
@@ -378,7 +382,9 @@ app.get("/shutoff/:vm", async function(req, res) {
 			ats: true
 		};
 		emitter.removeWorkspace(user.object.virtuals[Object.keys(user.object.virtuals)[Number(req.params.vm)]]);
-		await container.stop();
+		try {
+			await container.stop();
+		} catch {}
 	}
 	if (!state.State.Running) {
 		try {
@@ -408,7 +414,9 @@ app.get("/shutoff/:vm", async function(req, res) {
 			our_vm.started_shell.on("end", async function() {
 				our_vm.ats = true;
 				emitter.removeWorkspace(user.object.virtuals[Object.keys(user.object.virtuals)[Number(req.params.vm)]]);
-				await container.stop();
+				try {
+					await container.stop();
+				} catch {}
 				all_features[user.object.virtuals[Object.keys(user.object.virtuals)[Number(req.params.vm)]]] = { ats: true };
 				our_vm = {};
 			});
@@ -417,9 +425,12 @@ app.get("/shutoff/:vm", async function(req, res) {
 			all_features[user.object.virtuals[Object.keys(user.object.virtuals)[Number(req.params.vm)]]] = {
 				ats: true
 			};
+			state = await container.inspect();
 			if (state.State.Running) {
 				emitter.removeWorkspace(user.object.virtuals[Object.keys(user.object.virtuals)[Number(req.params.vm)]]);
-				await container.stop();
+				try {
+					await container.stop();
+				} catch {}
 			}
 			return res.status(500).render(__dirname + "/failed_to_start.jsembeds", {
 				username: he.encode(user.username)
@@ -622,7 +633,7 @@ app.post("/newVM", async function(req, res) {
 	if (Object.keys(user.object.virtuals).includes(req.body.vm_name)) return res.redirect("/newVM");
 	let distribs = ["debian", "archlinux", "duckcloud/suspiral"];
 	if (!distribs.includes(req.body.distro)) return res.status(400).end();
-	
+
 	let d = await docker.createContainer({
 		Image: req.body.distro,
 		AttachStdin: false,
@@ -868,7 +879,9 @@ app.post("/destroyAccount", async function(req, res) {
 			let inspects = await container.inspect();
 			if (inspects.State.Running) {
 				emitter.removeWorkspace(user.object.virtuals[Object.keys(user.object.virtuals)[Number(req.params.vm)]]);
-				await container.stop();
+				try {
+					await container.stop();
+				} catch {}
 			}
 			await container.remove();
 		}
