@@ -16,8 +16,9 @@
 			<label>VM name</label>: <input name="vm_name" placeholder="CloudVM" required></input>
 			<br>
 			Linux distro: <select name="distro" required>
-				<option value="debian" selected>Debian (11 bullseye)</option>
+				<option value="debian">Debian (11 bullseye)</option>
 				<option value="archlinux">Arch Linux (btw; 2023.02.01)</option>
+				<option value="duckcloud/suspiral" selected>Suspiral (11 bullseye)</option>
 			</select>
 			<br>
 			<input name="shouldHaveNetworking" onclick="NetworkingAgreement(this)" type="checkbox"></input> Enable networking

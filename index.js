@@ -176,7 +176,7 @@ app.get('/', async (req, res) => {
 	if (req.cookies.token) {
 		return res.redirect("/main");
 	}
-	res.render(__dirname + "/index.html");
+	res.render(__dirname + "/index.jsembeds");
 });
 
 app.get('/regular.css', async (req, res) => {
@@ -187,7 +187,7 @@ app.get("/register", async function(req, res) {
 	if (req.cookies.token) {
 		return res.redirect("/main");
 	}
-	res.render(__dirname + "/register.html");
+	res.render(__dirname + "/register.jsembeds");
 });
 
 app.post("/register", async function(req, res) {
@@ -249,7 +249,7 @@ app.get("/main", async function(req, res) {
 			dockers = dockers + "<a class=\"object vmsetlink\" href=\"/settings/" + Object.keys(user.object.virtuals).indexOf(vm) + "\" style=\"position: relative; top: " + top + "px;\"><b>" + he.encode(vm) + " </b><span class=\"" + state + "-icon\"></span><label class=\"arrow manage-vm\">→</label></a>";
 		}
 	}
-    res.render(__dirname + "/template.html", {
+    res.render(__dirname + "/template.jsembeds", {
 		username: he.encode(user.username),
 		dockers: dockers
 	});
@@ -288,7 +288,7 @@ app.get("/settings/:vm", async function(req, res) {
 	if (!Object.keys(user.object.virtuals)[Number(req.params.vm)]) return res.redirect("/main");
 	let container = docker.getContainer(user.object.virtuals[Object.keys(user.object.virtuals)[Number(req.params.vm)]]);
 	let state = await container.inspect();
-    res.render(__dirname + "/template_2.html", {
+    res.render(__dirname + "/template_2.jsembeds", {
 		username: he.encode(user.username),
 		vm_count: req.params.vm,
 		vm_name: he.encode(Object.keys(user.object.virtuals)[Number(req.params.vm)]),
@@ -421,7 +421,7 @@ app.get("/shutoff/:vm", async function(req, res) {
 				emitter.removeWorkspace(user.object.virtuals[Object.keys(user.object.virtuals)[Number(req.params.vm)]]);
 				await container.stop();
 			}
-			return res.status(500).render(__dirname + "/failed_to_start.html", {
+			return res.status(500).render(__dirname + "/failed_to_start.jsembeds", {
 				username: he.encode(user.username)
 			});
 		}
@@ -439,7 +439,7 @@ app.get("/chown/:vm", async function(req, res) {
 		return res.redirect("/");
 	}
 	if (!Object.keys(user.object.virtuals)[Number(req.params.vm)]) return res.redirect("/main");
-    res.render(__dirname + "/chown.html", {
+    res.render(__dirname + "/chown.jsembeds", {
 		username: he.encode(user.username),
 		vm_count: req.params.vm,
 		vm_name: he.encode(Object.keys(user.object.virtuals)[Number(req.params.vm)])
@@ -461,7 +461,7 @@ app.post("/chown/:vm", async function(req, res) {
 	let newOwner = await db.get(req.body.username);
 	if (!newOwner) return res.redirect("/chown/" + req.params.vm);
 	if ((!newOwner.isPRO && Object.keys(newOwner.virtuals).length) || newOwner.disableSharing) {
-		return res.render(__dirname + "/target_not_pro_yet.html", {
+		return res.render(__dirname + "/target_not_pro_yet.jsembeds", {
 			username: he.encode(user.username),
 			target: he.encode(req.body.username),
 			vm_count: req.params.vm,
@@ -486,7 +486,7 @@ app.get("/ren/:vm", async function(req, res) {
 		return res.redirect("/");
 	}
 	if (!Object.keys(user.object.virtuals)[Number(req.params.vm)]) return res.redirect("/main");
-    res.render(__dirname + "/rename.html", {
+    res.render(__dirname + "/rename.jsembeds", {
 		username: he.encode(user.username),
 		vm_count: req.params.vm,
 		vm_name: he.encode(Object.keys(user.object.virtuals)[Number(req.params.vm)])
@@ -587,12 +587,12 @@ app.get("/newVM", async function(req, res) {
 		return res.redirect("/");
 	}
 	if (!user.object.isPRO && Object.keys(user.object.virtuals).length >= 1) {
-		return res.status(400).render(__dirname + "/not_pro_yet.html", {
+		return res.status(400).render(__dirname + "/not_pro_yet.jsembeds", {
 			username: he.encode(user.username)
 		});
 	}
     
-	res.render(__dirname + "/newVM.html", {
+	res.render(__dirname + "/newVM.jsembeds", {
 		username: he.encode(user.username)
 	});
 });
@@ -607,7 +607,7 @@ app.post("/newVM", async function(req, res) {
 		return res.redirect("/");
 	}
 	if (!user.object.isPRO && Object.keys(user.object.virtuals).length >= 1) {
-		return res.status(400).render(__dirname + "/not_pro_yet.html", {
+		return res.status(400).render(__dirname + "/not_pro_yet.jsembeds", {
 			username: he.encode(user.username)
 		});
 	}
@@ -620,16 +620,16 @@ app.post("/newVM", async function(req, res) {
 
 	if (!req.body.vm_name) return res.redirect("/newVM");
 	if (Object.keys(user.object.virtuals).includes(req.body.vm_name)) return res.redirect("/newVM");
-	let distribs = ["debian", "archlinux"];
+	let distribs = ["debian", "archlinux", "duckcloud/suspiral"];
 	if (!distribs.includes(req.body.distro)) return res.status(400).end();
-
+	
 	let d = await docker.createContainer({
 		Image: req.body.distro,
 		AttachStdin: false,
 		AttachStdout: true,
 		AttachStderr: true,
 		Tty: true,
-		Cmd: ['/bin/bash'],
+		Cmd: req.body.distro === "duckcloud/suspiral" ? ['sh', '/etc/init_exec.sh'] : ['/bin/bash'],
 		OpenStdin: false,
 		StdinOnce: false,
 		NetworkDisabled: ((req.body.shouldHaveNetworking || "off") == "off"),
@@ -721,7 +721,7 @@ app.get("/user_page", async function(req, res) {
 		res.clearCookie("token_createfor");
 		return res.redirect("/ul_link");
 	}
-	res.render(__dirname + "/select_user_type.html", {
+	res.render(__dirname + "/select_user_type.jsembeds", {
 		username: he.encode(await a.text())
 	});
 });
@@ -819,7 +819,7 @@ app.get("/manage", async function(req, res) {
 		res.clearCookie("token");
 		return res.redirect("/");
 	}
-	res.render(__dirname + "/manage.html", {
+	res.render(__dirname + "/manage.jsembeds", {
 		username: he.encode(user.username),
 		associatedCS: (user.object.linkedTo) ? "" : "<!--",
 		associatedCE: (user.object.linkedTo) ? "" : "-->",
@@ -943,7 +943,7 @@ app.get("/apidocs", async function(req, res) {
 		res.clearCookie("token");
 		return res.redirect("/");
 	}
-	res.render(__dirname + "/apidocs.html", {
+	res.render(__dirname + "/apidocs.jsembeds", {
 		username: he.encode(user.username)
 	});
 });
