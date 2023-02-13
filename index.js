@@ -620,16 +620,15 @@ app.post("/newVM", async function(req, res) {
 
 	if (!req.body.vm_name) return res.redirect("/newVM");
 	if (Object.keys(user.object.virtuals).includes(req.body.vm_name)) return res.redirect("/newVM");
-	let distribs = ["debian", "archlinux"];
+	let distribs = ["debian", "archlinux", "duckcloud/suspiral"];
 	if (!distribs.includes(req.body.distro)) return res.status(400).end();
-
 	let d = await docker.createContainer({
 		Image: req.body.distro,
 		AttachStdin: false,
 		AttachStdout: true,
 		AttachStderr: true,
 		Tty: true,
-		Cmd: ['/bin/bash'],
+		Cmd: req.body.distro === "duckcloud/suspiral" ? ['sh', '/etc/init_exec.sh'] : ['/bin/bash'],
 		OpenStdin: false,
 		StdinOnce: false,
 		NetworkDisabled: ((req.body.shouldHaveNetworking || "off") == "off"),
@@ -638,6 +637,7 @@ app.post("/newVM", async function(req, res) {
 			MemorySwap: ((req.body.shouldUse512mbRAM || "off") == "on") ? 537919488 : 135266304
 		}
 	});
+	
 	let red = await d.inspect();
 	user.object.virtuals[req.body.vm_name] = red.Id;
 	await db.set(user.username, user.object);
