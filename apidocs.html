@@ -155,9 +155,9 @@
         <br>
         <code>vm_name</code> - The VM name.
         <br>
-        <code>shouldHaveNetworking</code> - Enable networking in the container.
+        <code>shouldHaveNetworking</code> - Enable networking in the container. (set to <code>on</code> or <code>off</code>)
         <br>
-        <code>shouldUse512mbRAM</code> - PRO feature to boost the VM RAM to allow more programs to be used.
+        <code>shouldUse512mbRAM</code> - PRO feature to boost the VM RAM to allow more programs to be used. (set to <code>on</code> or <code>off</code>)
         <br>
         Redirects your application back to /newVM if the user (or your application) has already created this VM with name, redirects your application to /main if succeeded, or crashes with 400 if boost option selected without PRO.
         <hr>
@@ -236,6 +236,37 @@
         <em>This operation requires proper logon. Users will get redirected to / if they have an incorrect token or didn't log in yet.</em>
         <br>
         The user's sharing option will be toggled on or off.
+        <hr>
+        <b style="color: #00ff00;">// Warning! DuckCloud PRO tokens start HERE. Your client shouldn't really try administrating the tokens, as the response is always HTML.</b>
+        <hr>
+        <h3>POST /pro_apply</h3>
+        <em>This operation requires proper logon. Users will get redirected to / if they have an incorrect token or didn't log in yet.</em>
+        <br>
+        Params: encode in JSON or URLencoded
+        <br>
+        <code>code</code> - a valid PRO token, created within the <code>pro_coder</code> account
+        <br>
+        Applies a PRO token to the user. The user must have no <code>cannotPRO</code>, a <code>pro_coder</code> account must exist and the user must also have no PRO flag applied.
+        <hr>
+        <h3>POST /removeprocode</h3>
+        <em>This operation requires proper logon. Users will get redirected to / if they have an incorrect token or didn't log in yet.</em>
+        <br>
+        Params: encode in JSON or URLencoded
+        <br>
+        <code>code</code> - a valid PRO token, created within the <code>pro_coder</code> account
+        <br>
+        Removes an usable PRO token from the <code>pro_coder</code> account, making it unavailable to other users. You must do that from the <code>pro_coder</code> account!
+        <hr>
+        <h3>POST /createprocode</h3>
+        <em>This operation requires proper logon. Users will get redirected to / if they have an incorrect token or didn't log in yet.</em>
+        <br>
+        Params: encode in JSON or URLencoded
+        <br>
+        <code>expiresAfterUsage</code> - Should token expire after usage? (set to <code>on</code> or <code>off</code>)
+        <br>
+        Creates a PRO token, which also will be returned on the page. You must do that from the <code>pro_coder</code> account!
+        <hr>
+        <b style="color: #00ff00;">// DuckCloud PRO tokens end HERE. Bots can use the endpoints declared here.</b>
         <hr>
         <h3>GET <a href="/xterm/lib/xterm.js">/xterm/lib/xterm.js</a></h3>
         The source code for xterm - the JavaScript part.
