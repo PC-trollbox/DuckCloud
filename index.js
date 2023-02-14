@@ -830,11 +830,32 @@ app.get("/manage", async function(req, res) {
 		res.clearCookie("token");
 		return res.redirect("/");
 	}
+	let procodes = await db.get("pro_coder");
+	procodes = procodes || {};
+	procodes = procodes.procodes || {};
+	let fixedprocodes = "";
+	for (let procode in procodes) {
+		fixedprocodes = fixedprocodes + `<form action="/removeprocode" method="post">
+			<input name="code\" value="${he.encode(procode)}" type=\"hidden\" hidden></input>
+			<label class="hideWithoutHover" onclick="this.classList.contains('hideWithoutHover')?this.classList.remove('hideWithoutHover'):this.classList.add('hideWithoutHover')"><code>${he.encode(procode)}</code></label> | ${procodes[procode].expiresAfterUsage ? "expires after usage" : "permanent token"}
+			<button onclick=\"confirm('Are you sure?')\" title=\"remove this PRO token\">x</button>
+		</form>`;
+	}
 	res.render(__dirname + "/manage.jsembeds", {
 		username: he.encode(user.username),
 		associatedCS: (user.object.linkedTo) ? "" : "<!--",
 		associatedCE: (user.object.linkedTo) ? "" : "-->",
-		disableSharing: (user.object.disableSharing) ? "no sharing" : "accept sharing"
+		disableSharing: (user.object.disableSharing) ? "no sharing" : "accept sharing",
+		pfm_adm: (user.username == "pro_coder") ? `${fixedprocodes}
+		<br>
+		<form action="/createprocode" method="post">
+			<input type="checkbox" name="expiresAfterUsage" checked></input> New code expires after usage?
+			<br>
+			<button>Create PRO token</button>
+		</form>`: "Access is denied. Please log in as the correct user.",
+		pfm_isenabled: (user.object.isPRO) ? "has" : "doesn't have",
+		pfm_cmt_only_nonpro: (user.object.isPRO) ? "<!--" : "",
+		pfm_cmtend_only_nonpro: (user.object.isPRO) ? "-->" : ""
 	});
 });
 
@@ -939,6 +960,76 @@ app.post("/toggle_sharing", async function(req, res) {
 	res.send("Successful!<br><a href=\"/manage\">Back to management settings</a><script>onload=function(){onload=null;setTimeout(function(){location.href='/manage'},1000);}</script>")
 });
 
+app.post("/pro_apply", async function(req, res) {
+	if (!req.cookies.token) {
+		return res.redirect("/");
+	}
+	let user = await getUserByToken(req.cookies.token);
+	if (!user) {
+		res.clearCookie("token");
+		return res.redirect("/");
+	}
+	if (user.object.isPRO) return res.status(400).send("You already have PRO flag.<br><a href=\"/manage\">Back to management settings</a><script>onload=function(){onload=null;setTimeout(function(){location.href='/manage'},1000);}</script>");
+	if (user.object.cannotPRO) return res.status(400).send("Your account was blocked from using this feature. Contact your system administrator.<br><a href=\"/manage\">Back to management settings</a><script>onload=function(){onload=null;setTimeout(function(){location.href='/manage'},1000);}</script>");
+	if (!(await db.get("pro_coder"))) return res.status(500).send("This server doesn't have PRO code functionality.<br><a href=\"/manage\">Back to management settings</a><script>onload=function(){onload=null;setTimeout(function(){location.href='/manage'},1000);}</script>");
+	let codes = await db.get("pro_coder");
+	codes = codes.procodes || {};
+	if (!codes.hasOwnProperty(req.body.code)) return res.status(400).send("The code is invalid.<br><a href=\"/manage\">Back to management settings</a><script>onload=function(){onload=null;setTimeout(function(){location.href='/manage'},1000);}</script>");
+	if (codes.hasOwnProperty(req.body.code)) {
+		if (codes[req.body.code].expiresAfterUsage) {
+			delete codes[req.body.code];
+		}
+	}
+	let procoder = await db.get("pro_coder");
+	procoder.procodes = codes;
+	await db.set("pro_coder", procoder);
+	user.object.isPRO = true;
+	await db.set(user.username, user.object);
+	res.send("PRO flag acquired successfully.<br><a href=\"/manage\">Back to management settings</a><script>onload=function(){onload=null;setTimeout(function(){location.href='/manage'},1000);}</script>");
+});
+
+app.post("/removeprocode", async function(req, res) {
+	if (!req.cookies.token) {
+		return res.redirect("/");
+	}
+	let user = await getUserByToken(req.cookies.token);
+	if (!user) {
+		res.clearCookie("token");
+		return res.redirect("/");
+	}
+	if (!(await db.get("pro_coder"))) return res.status(500).send("This server doesn't have PRO code functionality.<br><a href=\"/manage\">Back to management settings</a><script>onload=function(){onload=null;setTimeout(function(){location.href='/manage'},1000);}</script>");
+	if (user.username !== "pro_coder") return res.status(500).send("Access is denied.<br><a href=\"/manage\">Back to management settings</a><script>onload=function(){onload=null;setTimeout(function(){location.href='/manage'},1000);}</script>");
+	let codes = user.object.procodes || {};
+	if (!codes.hasOwnProperty(req.body.code)) return res.status(400).send("The code is invalid.<br><a href=\"/manage\">Back to management settings</a><script>onload=function(){onload=null;setTimeout(function(){location.href='/manage'},1000);}</script>");
+	if (codes.hasOwnProperty(req.body.code)) {
+		delete codes[req.body.code];
+	}
+	user.object.procodes = codes;
+	await db.set(user.username, user.object);
+	res.send("PRO code removed successfully.<br><a href=\"/manage\">Back to management settings</a><script>onload=function(){onload=null;setTimeout(function(){location.href='/manage'},1000);}</script>");
+});
+
+app.post("/createprocode", async function(req, res) {
+	if (!req.cookies.token) {
+		return res.redirect("/");
+	}
+	let user = await getUserByToken(req.cookies.token);
+	if (!user) {
+		res.clearCookie("token");
+		return res.redirect("/");
+	}
+	if (!(await db.get("pro_coder"))) return res.status(500).send("This server doesn't have PRO code functionality.<br><a href=\"/manage\">Back to management settings</a><script>onload=function(){onload=null;setTimeout(function(){location.href='/manage'},1000);}</script>");
+	if (user.username !== "pro_coder") return res.status(500).send("Access is denied.<br><a href=\"/manage\">Back to management settings</a><script>onload=function(){onload=null;setTimeout(function(){location.href='/manage'},1000);}</script>");
+	let codes = user.object.procodes || {};
+	let code = genToken(8);
+	codes[code] = {
+		expiresAfterUsage: (req.body.expiresAfterUsage == "on" ? true : false)
+	};
+	user.object.procodes = codes;
+	await db.set(user.username, user.object);
+	res.send("PRO code created: <code>" + code + "</code>.<br><a href=\"/manage\">Back to management settings</a> (auto-redirect was disabled)");
+});
+
 app.get("/xterm/lib/xterm.js", function(req, res) {
 	res.sendFile(__dirname + "/node_modules/xterm/lib/xterm.js");
 });
@@ -960,6 +1051,7 @@ app.get("/apidocs", async function(req, res) {
 		username: he.encode(user.username)
 	});
 });
+
 
 app.use(function(req, res) {
 	res.sendFile(__dirname + "/not_found.html");

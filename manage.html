@@ -11,8 +11,9 @@
 		<a href="/logoff" style="text-decoration: none;" class="logged-in-as" title="Logs you off!">🚪 <nodejs-embed>username</nodejs-embed></a>
 		<h1>☁️ DuckCloud</h1>
 		<hr>
-		<a href="/" class="arrow">←</a>
-		Configuring DuckCloud protection measures (could lock you out!)
+		<a href="/" class="arrow">←</a> Configuring DuckCloud experience
+		<br>
+		<b>Configuring DuckCloud protection measures (could lock you out!)</b>
 		<hr>
 		<b>Log out</b> - Removes a token cookie.
 		<form action="/logoff">
@@ -36,7 +37,7 @@
 		<hr>
 		<b>Unlink from UltimateLogon</b> - You can unlink your UltimateLogon account from DuckCloud ID.
 		<form action="/ul_unlink" method="POST">
-			Password: <input name="DuckCloud secret" type="DuckCloud secret" required></input>
+			DuckCloud secret: <input name="DuckCloud secret" type="DuckCloud secret" required></input>
 			<br>
 			<button>Disassociate</button>
 			<br>
@@ -53,9 +54,24 @@
 		<hr>
 		<b>Destroy the account</b> - Irreversible action to remove main data associated with you. The VMs will be stopped and removed. The DuckCloud ID will appear registerable again. The VMs will take a while if you have them running, so don't click away.
 		<form action="/destroyAccount" method="POST">
-			Password: <input name="DuckCloud secret" type="DuckCloud secret" required></input>
+			DuckCloud secret: <input name="DuckCloud secret" type="DuckCloud secret" required></input>
 			<br>
 			<button onclick="return confirm('Are you really really sure?')">Destroy the account</button>
 		</form>
+		<hr>
+		<b>PRO flag management</b>
+		<hr>
+		<b>Administration Panel</b> - create, delete and list PRO codes.
+		<br>
+		<nodejs-embed>pfm_adm</nodejs-embed>
+		<hr>
+		<b>Your account</b> <em><nodejs-embed>pfm_isenabled</nodejs-embed></em> the PRO flag, which gives the ability to create multiple VMs and get more RAM for them.
+		<br>
+		<nodejs-embed>pfm_cmt_only_nonpro</nodejs-embed>
+		If you need PRO, apply the code here. You generally get it from the administrator.
+		<form action="/pro_apply" method="POST">
+			<input name="code" placeholder="ffffffff"></input> <button>Apply</button>
+		</form>
+		<nodejs-embed>pfm_cmtend_only_nonpro</nodejs-embed>
 	</body>
 </html>
