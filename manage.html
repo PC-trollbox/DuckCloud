@@ -22,9 +22,9 @@
 		<hr>
 		<b>Change DuckCloud secret</b> - Changes the DuckCloud secret and the token.
 		<form action="/changePassword" method="POST">
-			Old DuckCloud secret: <input name="oldPassword" type="DuckCloud secret" required></input>
+			Old DuckCloud secret: <input name="oldPassword" type="password" required></input>
 			<br>
-			New DuckCloud secret: <input name="newPassword" type="DuckCloud secret" required></input>
+			New DuckCloud secret: <input name="newPassword" type="password" required></input>
 			<br>
 			<button>Change the DuckCloud secret</button>
 		</form>
@@ -37,7 +37,7 @@
 		<hr>
 		<b>Unlink from UltimateLogon</b> - You can unlink your UltimateLogon account from DuckCloud ID.
 		<form action="/ul_unlink" method="POST">
-			DuckCloud secret: <input name="DuckCloud secret" type="DuckCloud secret" required></input>
+			DuckCloud secret: <input name="password" type="password" required></input>
 			<br>
 			<button>Disassociate</button>
 			<br>
@@ -54,7 +54,7 @@
 		<hr>
 		<b>Destroy the account</b> - Irreversible action to remove main data associated with you. The VMs will be stopped and removed. The DuckCloud ID will appear registerable again. The VMs will take a while if you have them running, so don't click away.
 		<form action="/destroyAccount" method="POST">
-			DuckCloud secret: <input name="DuckCloud secret" type="DuckCloud secret" required></input>
+			DuckCloud secret: <input name="password" type="password" required></input>
 			<br>
 			<button onclick="return confirm('Are you really really sure?')">Destroy the account</button>
 		</form>
