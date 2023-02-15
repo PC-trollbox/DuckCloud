@@ -125,6 +125,7 @@ emitter = {
 		delete this.workspaces[vm];
 	}
 }
+let ips = {};
 
 //SHA-256 generator
 function SHA256(input) {
@@ -167,6 +168,13 @@ app.use(function(req, res, next) {
 		res.cookie("token", req.cookies.token, {
 			maxAge: 30 * 24 * 60 * 60 * 1000
 		});
+	}
+	let ip = req.headers["cf-connecting-ip"] || req.headers["x-forwarded-for"] || req.ip || "0.0.0.0";
+	if (ips.hasOwnProperty(ip)) {
+		if (ips[ip].includes(new URL(req.headers.origin || "http://non-existing.domain.loc").host)) {
+			res.set("Access-Control-Allow-Origin", "*");
+			res.set("Access-Control-Allow-Credentials", "true");
+		}
 	}
 	next();
 });
@@ -1052,6 +1060,146 @@ app.get("/apidocs", async function(req, res) {
 	});
 });
 
+app.get("/cors", async function(req, res) {
+	res.send(`Using CORS can be dangerous for your account. <br>
+To prevent malicious usage, you must have JavaScript enabled. <br>
+<noscript><b>No JavaScript is enabled. CORS access won't be allowed.</b> <br></noscript>
+Please input the domain name (must not include any wildcards) that can be used with your IP: <form action="/cors" method="post">
+	<input name="domain" placeholder="example.com"></input>
+	<input name="botpuzzl_solvd" id="botpuzzl_solvd" hidden type="hidden"></input>
+	<button disabled id="botpuzzl_snd">Send</button>
+</form>
+<hr>
+This modification is temporary. You should go on this page from time to time.
+<br>
+Available modifications on this IP:
+<br>
+${(ips[req.headers["cf-connecting-ip"] || req.headers["x-forwarded-for"] || req.ip || "0.0.0.0"]||[]).join("<br>")}
+<hr>
+If you see an unusual website domain, <a href="/corsReset">reset your CORS list</a>!
+<script>
+	if (navigator.webdriver) {
+		alert('Oops. You cannot use an automated browser!');
+	} else {
+		function botpuzzl() {
+			botpuzzl_solvd.value = "";
+			botpuzzl_snd.disabled = true;
+			fetch('/botpuzzl').then(function(res) {
+				res.text().then(function(txt) {
+					txt = txt.split("");
+					txt = txt.map(a => String.fromCharCode((a.charCodeAt() - 65) ^ 42));
+					txt = txt.join("");
+					txt = eval(txt);
+					botpuzzl_solvd.value = txt;
+					botpuzzl_snd.disabled = false;
+					setTimeout(function() {
+						botpuzzl();
+					}, 3000-Date.now()%3000);
+				});
+			});
+		}
+	}
+	botpuzzl();
+</script>`);
+});
+
+app.get("/botpuzzl", async function(req, res) {
+	if (!req.cookies.token) {
+		return res.send(
+			"alert('Oh no! You must log in to get to the puzzle.');location.href='/';".split("")
+				.map(a => String.fromCharCode((a.charCodeAt() ^ 42) + 65))
+				.join("")
+		);
+	}
+	let user = await getUserByToken(req.cookies.token);
+	if (!user) {
+		res.clearCookie("token");
+		return res.send(
+			"alert('Oh no! You must log in to get to the puzzle.');location.href='/';".split("")
+				.map(a => String.fromCharCode((a.charCodeAt() ^ 42) + 65))
+				.join("")
+		);
+	}
+	let tested = ["host", "user-agent", "accept", "accept-language", "accept-encoding", "connection"];
+	let insecure_b0tz = ["curl/", "Wget/"];
+	for (let hdr of tested) {
+		if (!req.headers[hdr]) return res.send(
+				"alert('Sorry, the bot check has failed. If you think this was in error, submit an issue on GitHub.');location.href='/';".split("")
+					.map(a => String.fromCharCode((a.charCodeAt() ^ 42) + 65))
+					.join("")
+			);
+	}
+	for (let bot of insecure_b0tz) {
+		if (req.headers["user-agent"].includes(bot)) return res.send(
+			"alert('Sorry, the bot check has failed. If you think this was in error, submit an issue on GitHub.');location.href='/';".split("")
+				.map(a => String.fromCharCode((a.charCodeAt() ^ 42) + 65))
+				.join("")
+		);
+	}
+	let evald_code = "";
+	let date = Date.now() / 3000;
+	date = Math.floor(date);
+	let ip = req.headers["cf-connecting-ip"] || req.headers["x-forwarded-for"] || req.ip || genToken(64);
+	let datandip = date + ip + ip + date;
+	if (date % 10 > 5) datandip = datandip + datandip;
+	for (let a in datandip) {
+		evald_code = evald_code + Number(datandip[a].charCodeAt());
+		if (a % 2 == 0) {
+			if (a % 3 == 0) {
+				evald_code = evald_code + "+";
+			} else {
+				evald_code = evald_code + "-";
+			}
+		}
+	}
+	if (evald_code.endsWith("+") || evald_code.endsWith("-")) evald_code = evald_code.split("", evald_code.length - 1).join("");
+	evald_code = evald_code.split("").map(a => String.fromCharCode((a.charCodeAt() ^ 42) + 65)).join("");
+	res.send(evald_code);
+});
+
+app.post("/cors", async function(req, res) {
+	if (!req.cookies.token) {
+		return res.redirect("/cors");
+	}
+	let user = await getUserByToken(req.cookies.token);
+	if (!user) {
+		res.clearCookie("token");
+		return res.redirect("/cors");
+	}
+	let tested = ["host", "user-agent", "accept", "accept-language", "accept-encoding", "connection"];
+	let insecure_b0tz = ["curl/", "Wget/"];
+	for (let hdr of tested) if (!req.headers[hdr]) return res.redirect("/cors");
+	for (let bot of insecure_b0tz) if (req.headers["user-agent"].includes(bot)) return res.redirect("/cors");
+	let evald_code = "";
+	let date = Date.now() / 3000;
+	date = Math.floor(date);
+	let ip = req.headers["cf-connecting-ip"] || req.headers["x-forwarded-for"] || req.ip || genToken(64);
+	let datandip = date + ip + ip + date;
+	if (date % 10 > 5) datandip = datandip + datandip;
+	for (let a in datandip) {
+		evald_code = evald_code + Number(datandip[a].charCodeAt());
+		if (a % 2 == 0) {
+			if (a % 3 == 0) {
+				evald_code = evald_code + "+";
+			} else {
+				evald_code = evald_code + "-";
+			}
+		}
+	}
+	if (evald_code.endsWith("+") || evald_code.endsWith("-")) evald_code = evald_code.split("", evald_code.length - 1).join("");
+	evald_code = eval(evald_code);
+	if (evald_code != req.body.botpuzzl_solvd) return res.send("An invalid bot verification code was passed... try again! (maybe you need to un-throttle your network speed!)<br><a href=\"/cors\">Back to CORS settings page</a><script>onload=function(){onload=null;setTimeout(function(){location.href='/cors'},1000);}</script>");
+	ip = req.headers["cf-connecting-ip"] || req.headers["x-forwarded-for"] || req.ip || "0.0.0.0";
+	if (!ips[ip]) ips[ip] = [];
+	if (String(req.body.domain).includes("*")) return res.send("You cannot use a wildcard with CORS!<br><a href=\"/cors\">Back to CORS settings page</a><script>onload=function(){onload=null;setTimeout(function(){location.href='/cors'},1000);}</script>");
+	ips[ip].push(req.body.domain);
+	res.send("Your network services can now use DuckCloud APIs!<br><a href=\"/cors\">Back to CORS settings page</a><script>onload=function(){onload=null;setTimeout(function(){location.href='/cors'},1000);}</script>");
+});
+app.get("/corsReset", async function(req, res) {
+	let ip = req.headers["cf-connecting-ip"] || req.headers["x-forwarded-for"] || req.ip || "0.0.0.0";
+	ips[ip] = [];
+	res.send("Your network services can no longer use DuckCloud APIs.<br><a href=\"/cors\">Back to CORS settings page</a><script>onload=function(){onload=null;setTimeout(function(){location.href='/cors'},1000);}</script>");
+});
 
 app.use(function(req, res) {
 	res.sendFile(__dirname + "/not_found.html");

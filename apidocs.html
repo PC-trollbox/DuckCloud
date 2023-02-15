@@ -279,6 +279,30 @@
         <br>
         The official API documentation.
         <hr>
+        <h3>GET <a href="/cors">/cors</a></h3>
+        <br>
+        CORS editing page. You can get CORS for a domain on this page. Every domain you type in will be allowed! For even more effect, use <code>non-existing.domain.loc</code> as a domain.
+        <hr>
+        <h3>POST /botpuzzl</h3>
+        <em>This operation requires proper logon. Users will get an alert code sent if they have an incorrect token or didn't log in yet.</em>
+        <br>
+        Basically a protection from skids. They can still load a whole browser, but that's kind of bloat.
+        <br>
+        Responds with a somewhat encrypted code, but not THAT encrypted because the client can interpret it.
+        <hr>
+        <h3>POST /cors</h3>
+        <em>This operation requires proper logon. Users will get redirected to /cors if they have an incorrect token or didn't log in yet.</em>
+        <br>
+        <code>botpuzzl_solvd</code> - The code result of /botpuzzl.
+        <br>
+        <code>domain</code> - The domain to add.
+        <br>
+        Adds the domain to the allowed list for this IP.
+        <hr>
+        <h3>GET <a href="/corsReset">/corsReset</a></h3>
+        <br>
+        Removes all data from the allowed list for this IP.
+        <hr>
         <h2>Socket.IO API</h2>
         You should use THIS for I/O on the user's VMs, not the HTTP calls - as HTTP can be easily damaged and it's not that fast as you think.
         <br>
