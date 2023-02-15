@@ -838,7 +838,7 @@ app.get("/manage", async function(req, res) {
 		fixedprocodes = fixedprocodes + `<form action="/removeprocode" method="post">
 			<input name="code\" value="${he.encode(procode)}" type=\"hidden\" hidden></input>
 			<label class="hideWithoutHover" onclick="this.classList.contains('hideWithoutHover')?this.classList.remove('hideWithoutHover'):this.classList.add('hideWithoutHover')"><code>${he.encode(procode)}</code></label> | ${procodes[procode].expiresAfterUsage ? "expires after usage" : "permanent token"}
-			<button onclick=\"confirm('Are you sure?')\" title=\"remove this PRO token\">x</button>
+			<button onclick=\"return confirm('Are you sure?')\" title=\"remove this PRO token\">x</button>
 		</form>`;
 	}
 	res.render(__dirname + "/manage.jsembeds", {
