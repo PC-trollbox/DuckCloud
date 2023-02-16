@@ -5,28 +5,29 @@ const cookieParser = require("cookie-parser");
 const he = require("he");
 const fs = require("fs");
 const crypto = require("crypto");
-const dockerode = require('dockerode');
+const dockerode = require('dockerode');
 const engine = require("jsembedtemplateengine");
-const docker = new dockerode();
+const docker = new dockerode();
 const app = express();
 const http = require("http").Server(app);
 const io = require("socket.io")(http, {
 	allowEIO3: true,
 	cookie: true
 });
+
 function setTimeoutAsync(ms) {
-	return new Promise(function(a) {
-		setTimeout(function() {
+	return new Promise(function (a) {
+		setTimeout(function () {
 			a(ms);
 		}, ms);
 	});
 }
 const cookie = require("cookie");
 const db = {
-	get: async function(item) {
+	get: async function (item) {
 		return this.db[item];
 	},
-	set: async function(item, content) {
+	set: async function (item, content) {
 		while (fs.existsSync(__dirname + "/db.lok")) {
 			await setTimeoutAsync(500);
 		}
@@ -35,9 +36,11 @@ const db = {
 		var db = JSON.parse(JSON.stringify(this.db));
 		db[item] = content;
 		this.db = db;
-		fs.rmSync(__dirname + "/db.lok", {force: true});
+		fs.rmSync(__dirname + "/db.lok", {
+			force: true
+		});
 	},
-	delete: async function(item) {
+	delete: async function (item) {
 		while (fs.existsSync(__dirname + "/db.lok")) {
 			await setTimeoutAsync(500);
 		}
@@ -46,9 +49,11 @@ const db = {
 		var db = JSON.parse(JSON.stringify(this.db));
 		delete db[item];
 		this.db = db;
-		fs.rmSync(__dirname + "/db.lok", {force: true});
+		fs.rmSync(__dirname + "/db.lok", {
+			force: true
+		});
 	},
-	list: async function() {
+	list: async function () {
 		return Object.keys(this.db)
 	},
 	db: null,
@@ -59,11 +64,11 @@ const db = {
 		require("fs").writeFileSync(__dirname + "/db.json", JSON.stringify(val, null, "\t"));
 	}
 };
-const promisifyStream = stream => new Promise((resolve, reject) => {
+const promisifyStream = stream => new Promise((resolve, reject) => {
 	let myData = Buffer.from("");
-	stream.on('data', data => myData = Buffer.concat([myData, data]))
-	stream.on('end', () => resolve(myData))
-	stream.on('error', reject)
+	stream.on('data', data => myData = Buffer.concat([myData, data]))
+	stream.on('end', () => resolve(myData))
+	stream.on('error', reject)
 });
 let all_features = {};
 engine(app, {
@@ -74,15 +79,20 @@ app.set('views', '.')
 app.set('view engine', 'jsembeds');
 
 //Assign some middleware
-app.use(bodyParser.urlencoded({extended: true, limit: "128mb"}));
-app.use(bodyParser.json({limit: "128mb"}));
+app.use(bodyParser.urlencoded({
+	extended: true,
+	limit: "128mb"
+}));
+app.use(bodyParser.json({
+	limit: "128mb"
+}));
 app.use(cookieParser());
 
 emitter = {
 	workspaces: {},
 	createWorkspace: function (vm) {
 		return this.workspaces[vm] = {
-			emit: function(e, ...mit) {
+			emit: function (e, ...mit) {
 				if (e == "deletion") throw new Error("impossible");
 				if (!e) throw new Error("get me some events");
 				if (typeof e !== "string") throw new Error("omg this is really impossible to emit " + String(typeof e));
@@ -92,19 +102,19 @@ emitter = {
 					}
 				}
 			},
-			on: function(e, mit) {
+			on: function (e, mit) {
 				if (!e) throw new Error("get me some events");
 				if (typeof e !== "string") throw new Error("omg this is really impossible to emit " + String(typeof e));
 				if (typeof mit !== "function") throw new Error("omg this is really impossible to catch using " + String(typeof mit));
 				if (!this.callbacks.hasOwnProperty(e)) this.callbacks[e] = [];
 				this.callbacks[e].push(mit);
 			},
-			once: function(e, mit) {
+			once: function (e, mit) {
 				if (!e) throw new Error("get me some events");
 				if (typeof e !== "string") throw new Error("omg this is really impossible to emit " + String(typeof e));
 				if (typeof mit !== "function") throw new Error("omg this is really impossible to catch using " + String(typeof mit));
 				if (!this.callbacks.hasOwnProperty(e)) this.callbacks[e] = [];
-				let regNum = this.callbacks[e].push(function(e, ...mit2) {
+				let regNum = this.callbacks[e].push(function (e, ...mit2) {
 					this.callbacks[e].splice(regNum, 1);
 					mit(e, ...mit2);
 				});
@@ -115,8 +125,10 @@ emitter = {
 	goToWorkspace: function (vm) {
 		return this.workspaces[vm] || this.createWorkspace(vm);
 	},
-	removeWorkspace: function(vm) {
-		if (!this.workspaces[vm]) this.workspaces[vm] = {callbacks:{}};
+	removeWorkspace: function (vm) {
+		if (!this.workspaces[vm]) this.workspaces[vm] = {
+			callbacks: {}
+		};
 		if (this.workspaces[vm].callbacks.hasOwnProperty("deletion")) {
 			for (let callback of this.workspaces[vm].callbacks["deletion"]) {
 				callback("");
@@ -147,7 +159,11 @@ async function getUserByToken(token) {
 	let users = await db.list();
 	for (let user of users) {
 		let obj = await db.get(user);
-		if (obj.token == token) return { object: obj, username: user, token: token };
+		if (obj.token == token) return {
+			object: obj,
+			username: user,
+			token: token
+		};
 	}
 	return null;
 }
@@ -157,13 +173,17 @@ async function findUserByDuckCloudAssignedToken(token) {
 	let users = await db.list();
 	for (let user of users) {
 		let obj = await db.get(user);
-		if (obj.linkedTo == token) return { object: obj, username: user, token: obj.token };
+		if (obj.linkedTo == token) return {
+			object: obj,
+			username: user,
+			token: obj.token
+		};
 	}
 	return null;
 }
 
 //Automatic session extension
-app.use(function(req, res, next) {
+app.use(function (req, res, next) {
 	if (req.cookies.token) {
 		res.cookie("token", req.cookies.token, {
 			maxAge: 30 * 24 * 60 * 60 * 1000
@@ -191,14 +211,14 @@ app.get('/regular.css', async (req, res) => {
 	res.sendFile(__dirname + "/regular.css");
 });
 
-app.get("/register", async function(req, res) {
+app.get("/register", async function (req, res) {
 	if (req.cookies.token) {
 		return res.redirect("/main");
 	}
 	res.render(__dirname + "/register.jsembeds");
 });
 
-app.post("/register", async function(req, res) {
+app.post("/register", async function (req, res) {
 	if (req.cookies.token) {
 		return res.redirect("/main");
 	}
@@ -211,13 +231,13 @@ app.post("/register", async function(req, res) {
 		password: SHA256(req.body.password),
 		token: genToken(64),
 		virtuals: {},
-        isPRO: false,
+		isPRO: false,
 		disableSharing: true
 	});
 	return res.redirect("/");
 });
 
-app.post("/login", async function(req, res) {
+app.post("/login", async function (req, res) {
 	if (req.cookies.token) {
 		return res.redirect("/main");
 	}
@@ -237,8 +257,8 @@ app.post("/login", async function(req, res) {
 	res.redirect("/main");
 });
 
-app.get("/main", async function(req, res) {
-    if (!req.cookies.token) {
+app.get("/main", async function (req, res) {
+	if (!req.cookies.token) {
 		return res.redirect("/");
 	}
 	let user = await getUserByToken(req.cookies.token);
@@ -257,13 +277,13 @@ app.get("/main", async function(req, res) {
 			dockers = dockers + "<a class=\"object vmsetlink\" href=\"/settings/" + Object.keys(user.object.virtuals).indexOf(vm) + "\" style=\"position: relative; top: " + top + "px;\"><b>" + he.encode(vm) + " </b><span class=\"" + state + "-icon\"></span><label class=\"arrow manage-vm\">→</label></a>";
 		}
 	}
-    res.render(__dirname + "/template.jsembeds", {
+	res.render(__dirname + "/template.jsembeds", {
 		username: he.encode(user.username),
 		dockers: dockers
 	});
 });
-app.get("/listContainer", async function(req, res) {
-    if (!req.cookies.token) {
+app.get("/listContainer", async function (req, res) {
+	if (!req.cookies.token) {
 		return res.redirect("/");
 	}
 	let user = await getUserByToken(req.cookies.token);
@@ -277,15 +297,19 @@ app.get("/listContainer", async function(req, res) {
 			let container = docker.getContainer(user.object.virtuals[vm]);
 			let state = await container.inspect();
 			state = state.State.Running ? "online" : "offline";
-			dockers.push({vmname: vm, vmname_encoded: he.encode(vm), status: state});
+			dockers.push({
+				vmname: vm,
+				vmname_encoded: he.encode(vm),
+				status: state
+			});
 		}
 	}
 	return res.send(dockers);
 });
 
 
-app.get("/settings/:vm", async function(req, res) {
-    if (!req.cookies.token) {
+app.get("/settings/:vm", async function (req, res) {
+	if (!req.cookies.token) {
 		return res.redirect("/");
 	}
 	let user = await getUserByToken(req.cookies.token);
@@ -296,7 +320,7 @@ app.get("/settings/:vm", async function(req, res) {
 	if (!Object.keys(user.object.virtuals)[Number(req.params.vm)]) return res.redirect("/main");
 	let container = docker.getContainer(user.object.virtuals[Object.keys(user.object.virtuals)[Number(req.params.vm)]]);
 	let state = await container.inspect();
-    res.render(__dirname + "/template_2.jsembeds", {
+	res.render(__dirname + "/template_2.jsembeds", {
 		username: he.encode(user.username),
 		vm_count: req.params.vm,
 		vm_name: he.encode(Object.keys(user.object.virtuals)[Number(req.params.vm)]),
@@ -304,8 +328,8 @@ app.get("/settings/:vm", async function(req, res) {
 	});
 });
 
-app.get("/burn/:vm", async function(req, res) {
-    if (!req.cookies.token) {
+app.get("/burn/:vm", async function (req, res) {
+	if (!req.cookies.token) {
 		return res.redirect("/");
 	}
 	let user = await getUserByToken(req.cookies.token);
@@ -368,8 +392,8 @@ app.get("/burn/:vm", async function(req, res) {
 	res.redirect("/main");
 });
 
-app.get("/shutoff/:vm", async function(req, res) {
-    if (!req.cookies.token) {
+app.get("/shutoff/:vm", async function (req, res) {
+	if (!req.cookies.token) {
 		return res.redirect("/");
 	}
 	let user = await getUserByToken(req.cookies.token);
@@ -403,9 +427,19 @@ app.get("/shutoff/:vm", async function(req, res) {
 				ats: false
 			};
 			let our_vm = all_features[user.object.virtuals[Object.keys(user.object.virtuals)[Number(req.params.vm)]]];
-			our_vm.exec = await container.exec({Cmd: ['/bin/bash'], Tty: true, AttachStdin: true, AttachStdout: true, AttachStderr: true, Privileged: true });
-			our_vm.started_shell = await our_vm.exec.start({ Tty: true, stdin: true });
-			our_vm.started_shell.on("data", function(a) {
+			our_vm.exec = await container.exec({
+				Cmd: ['/bin/bash'],
+				Tty: true,
+				AttachStdin: true,
+				AttachStdout: true,
+				AttachStderr: true,
+				Privileged: true
+			});
+			our_vm.started_shell = await our_vm.exec.start({
+				Tty: true,
+				stdin: true
+			});
+			our_vm.started_shell.on("data", function (a) {
 				if ((our_vm.shell.length + a.length) < require("buffer").constants.MAX_STRING_LENGTH) {
 					our_vm.shell = Buffer.concat([our_vm.shell, a]);
 					d.emit("data", a);
@@ -419,13 +453,15 @@ app.get("/shutoff/:vm", async function(req, res) {
 					}
 				}
 			});
-			our_vm.started_shell.on("end", async function() {
+			our_vm.started_shell.on("end", async function () {
 				our_vm.ats = true;
 				emitter.removeWorkspace(user.object.virtuals[Object.keys(user.object.virtuals)[Number(req.params.vm)]]);
 				try {
 					await container.stop();
 				} catch {}
-				all_features[user.object.virtuals[Object.keys(user.object.virtuals)[Number(req.params.vm)]]] = { ats: true };
+				all_features[user.object.virtuals[Object.keys(user.object.virtuals)[Number(req.params.vm)]]] = {
+					ats: true
+				};
 				our_vm = {};
 			});
 			all_features[user.object.virtuals[Object.keys(user.object.virtuals)[Number(req.params.vm)]]] = our_vm;
@@ -448,8 +484,8 @@ app.get("/shutoff/:vm", async function(req, res) {
 	res.redirect("/settings/" + req.params.vm);
 });
 
-app.get("/chown/:vm", async function(req, res) {
-    if (!req.cookies.token) {
+app.get("/chown/:vm", async function (req, res) {
+	if (!req.cookies.token) {
 		return res.redirect("/");
 	}
 	let user = await getUserByToken(req.cookies.token);
@@ -458,15 +494,15 @@ app.get("/chown/:vm", async function(req, res) {
 		return res.redirect("/");
 	}
 	if (!Object.keys(user.object.virtuals)[Number(req.params.vm)]) return res.redirect("/main");
-    res.render(__dirname + "/chown.jsembeds", {
+	res.render(__dirname + "/chown.jsembeds", {
 		username: he.encode(user.username),
 		vm_count: req.params.vm,
 		vm_name: he.encode(Object.keys(user.object.virtuals)[Number(req.params.vm)])
 	});
 });
 
-app.post("/chown/:vm", async function(req, res) {
-    if (!req.cookies.token) {
+app.post("/chown/:vm", async function (req, res) {
+	if (!req.cookies.token) {
 		return res.redirect("/");
 	}
 	let user = await getUserByToken(req.cookies.token);
@@ -495,8 +531,8 @@ app.post("/chown/:vm", async function(req, res) {
 	res.redirect("/main");
 });
 
-app.get("/ren/:vm", async function(req, res) {
-    if (!req.cookies.token) {
+app.get("/ren/:vm", async function (req, res) {
+	if (!req.cookies.token) {
 		return res.redirect("/");
 	}
 	let user = await getUserByToken(req.cookies.token);
@@ -505,15 +541,15 @@ app.get("/ren/:vm", async function(req, res) {
 		return res.redirect("/");
 	}
 	if (!Object.keys(user.object.virtuals)[Number(req.params.vm)]) return res.redirect("/main");
-    res.render(__dirname + "/rename.jsembeds", {
+	res.render(__dirname + "/rename.jsembeds", {
 		username: he.encode(user.username),
 		vm_count: req.params.vm,
 		vm_name: he.encode(Object.keys(user.object.virtuals)[Number(req.params.vm)])
 	});
 });
 
-app.post("/ren/:vm", async function(req, res) {
-    if (!req.cookies.token) {
+app.post("/ren/:vm", async function (req, res) {
+	if (!req.cookies.token) {
 		return res.redirect("/");
 	}
 	let user = await getUserByToken(req.cookies.token);
@@ -537,8 +573,8 @@ app.post("/ren/:vm", async function(req, res) {
 	res.redirect("/settings/" + req.params.vm);
 });
 
-app.post("/newInput/:vm", async function(req, res) {
-    if (!req.cookies.token) {
+app.post("/newInput/:vm", async function (req, res) {
+	if (!req.cookies.token) {
 		return res.redirect("/");
 	}
 	let user = await getUserByToken(req.cookies.token);
@@ -555,7 +591,7 @@ app.post("/newInput/:vm", async function(req, res) {
 	res.send(our_vm.shell);
 });
 
-app.get("/sendInput/:vm", async function(req, res) {
+app.get("/sendInput/:vm", async function (req, res) {
 	if (!req.cookies.token) {
 		return res.redirect("/");
 	}
@@ -575,7 +611,7 @@ app.get("/sendInput/:vm", async function(req, res) {
 	res.send("ok");
 });
 
-app.get("/resize/:vm", async function(req, res) {
+app.get("/resize/:vm", async function (req, res) {
 	if (!req.cookies.token) {
 		return res.redirect("/");
 	}
@@ -592,12 +628,15 @@ app.get("/resize/:vm", async function(req, res) {
 	}
 	if (isNaN(Number(req.query.w)) || !isFinite(Number(req.query.w))) return res.send("soft fail");
 	if (isNaN(Number(req.query.h)) || !isFinite(Number(req.query.h))) return res.send("soft fail");
-	our_vm.exec.resize({ w: req.query.w, h: req.query.h });
+	our_vm.exec.resize({
+		w: req.query.w,
+		h: req.query.h
+	});
 	res.send("ok");
 });
 
-app.get("/newVM", async function(req, res) {
-    if (!req.cookies.token) {
+app.get("/newVM", async function (req, res) {
+	if (!req.cookies.token) {
 		return res.redirect("/");
 	}
 	let user = await getUserByToken(req.cookies.token);
@@ -610,14 +649,14 @@ app.get("/newVM", async function(req, res) {
 			username: he.encode(user.username)
 		});
 	}
-    
+
 	res.render(__dirname + "/newVM.jsembeds", {
 		username: he.encode(user.username)
 	});
 });
 
-app.post("/newVM", async function(req, res) {
-    if (!req.cookies.token) {
+app.post("/newVM", async function (req, res) {
+	if (!req.cookies.token) {
 		return res.redirect("/");
 	}
 	let user = await getUserByToken(req.cookies.token);
@@ -663,8 +702,8 @@ app.post("/newVM", async function(req, res) {
 	res.redirect("/main");
 });
 
-app.get("/logoff", async function(req, res) {
-    if (!req.cookies.token) {
+app.get("/logoff", async function (req, res) {
+	if (!req.cookies.token) {
 		return res.redirect("/");
 	}
 	let user = await getUserByToken(req.cookies.token);
@@ -672,19 +711,20 @@ app.get("/logoff", async function(req, res) {
 		res.clearCookie("token");
 		return res.redirect("/");
 	}
-    res.clearCookie("token");
+	res.clearCookie("token");
 	return res.redirect("/");
 });
 
-app.get("/ul_link", async function(req, res) {
+app.get("/ul_link", async function (req, res) {
 	if (req.cookies.token) return res.redirect("/main");
 	if (req.cookies.token_createfor) return res.redirect("/user_page");
 	if (!req.query.deviceID) res.redirect("https://ultimatelogon.pcprojects.tk/oauth?requestToken=a&followLink=" + encodeURIComponent("http://" + req.hostname + ":3000/ul_link") + "&companyName=DuckCloud");
-	let devdet = {ok:false};
+	let devdet = {
+		ok: false
+	};
 	try {
 		devdet = await fetch("https://ultimatelogon.pcprojects.tk/deviceDetails?device=" + req.query.deviceID);
-	} catch (e) {
-	}
+	} catch (e) {}
 	if (!devdet.ok) {
 		return res.status(400).end();
 	}
@@ -697,7 +737,9 @@ app.get("/ul_link", async function(req, res) {
 	//You might want to save data here.
 	res.cookie("token_createfor", json.user.token);
 	res.cookie("createfor_password", json.user.password)
-	let data = {json:function(){}};
+	let data = {
+		json: function () {}
+	};
 	try {
 		data = await fetch("https://ultimatelogon.pcprojects.tk/appdata", {
 			headers: {
@@ -723,10 +765,12 @@ app.get("/ul_link", async function(req, res) {
 	}
 	res.redirect("/user_page");
 });
-app.get("/user_page", async function(req, res) {
+app.get("/user_page", async function (req, res) {
 	if (req.cookies.token) return res.redirect("/main");
 	if (!req.cookies.token_createfor) return res.redirect("/ul_link");
-	let a = {ok: false}
+	let a = {
+		ok: false
+	}
 	try {
 		a = await fetch("https://ultimatelogon.pcprojects.tk/username_scripting", {
 			headers: {
@@ -744,18 +788,19 @@ app.get("/user_page", async function(req, res) {
 		username: he.encode(await a.text())
 	});
 });
-app.post("/user_page", async function(req, res) {
+app.post("/user_page", async function (req, res) {
 	if (req.cookies.token) return res.redirect("/main");
 	if (!req.cookies.token_createfor) return res.redirect("/ul_link");
-	let a = {ok:false};
+	let a = {
+		ok: false
+	};
 	try {
 		a = await fetch("https://ultimatelogon.pcprojects.tk/username_scripting", {
 			headers: {
 				"Cookie": "token=" + req.cookies.token_createfor
 			}
 		});
-	} catch {
-	}
+	} catch {}
 	if (!a.ok) {
 		res.clearCookie("token_createfor");
 		return res.redirect("/ul_link");
@@ -773,7 +818,11 @@ app.post("/user_page", async function(req, res) {
 			return res.redirect("https://ultimatelogon.pcprojects.tk/blocked_user?appName=DuckCloud")
 		}
 		let token = genToken(32);
-		let data = {json:function(){return {}}};
+		let data = {
+			json: function () {
+				return {}
+			}
+		};
 		try {
 			data = await fetch("https://ultimatelogon.pcprojects.tk/appdata", {
 				headers: {
@@ -781,7 +830,7 @@ app.post("/user_page", async function(req, res) {
 				}
 			});
 		} catch {
-			
+
 		}
 		data = await data.json();
 		data["duckcloud_token"] = token;
@@ -821,15 +870,14 @@ app.post("/user_page", async function(req, res) {
 				assignedTo: token,
 				disableSharing: true
 			});
-		} catch {
-		}
+		} catch {}
 	}
 	res.clearCookie("token_createfor");
 	res.clearCookie("createfor_password");
 	res.redirect("/");
 });
 
-app.get("/manage", async function(req, res) {
+app.get("/manage", async function (req, res) {
 	if (!req.cookies.token) {
 		return res.redirect("/");
 	}
@@ -860,14 +908,14 @@ app.get("/manage", async function(req, res) {
 			<input type="checkbox" name="expiresAfterUsage" checked></input> New code expires after usage?
 			<br>
 			<button>Create PRO token</button>
-		</form>`: "Access is denied. Please log in as the correct user.",
+		</form>` : "Access is denied. Please log in as the correct user.",
 		pfm_isenabled: (user.object.isPRO) ? "has" : "doesn't have",
 		pfm_cmt_only_nonpro: (user.object.isPRO) ? "<!--" : "",
 		pfm_cmtend_only_nonpro: (user.object.isPRO) ? "-->" : ""
 	});
 });
 
-app.post("/changePassword", async function(req, res) {
+app.post("/changePassword", async function (req, res) {
 	if (!req.body.oldPassword) return res.redirect("/manage");
 	if (!req.body.newPassword) return res.redirect("/manage");
 	if (!req.cookies.token) {
@@ -890,7 +938,7 @@ app.post("/changePassword", async function(req, res) {
 	}
 });
 
-app.post("/destroyAccount", async function(req, res) {
+app.post("/destroyAccount", async function (req, res) {
 	if (!req.body.password) return res.redirect("/manage");
 	if (!req.cookies.token) {
 		return res.redirect("/");
@@ -920,7 +968,7 @@ app.post("/destroyAccount", async function(req, res) {
 	}
 });
 
-app.post("/changeToken", async function(req, res) {
+app.post("/changeToken", async function (req, res) {
 	if (!req.cookies.token) {
 		return res.redirect("/");
 	}
@@ -935,7 +983,7 @@ app.post("/changeToken", async function(req, res) {
 	res.redirect("/");
 });
 
-app.post("/ul_unlink", async function(req, res) {
+app.post("/ul_unlink", async function (req, res) {
 	if (!req.body.password) return res.redirect("/manage");
 	if (!req.cookies.token) {
 		return res.redirect("/");
@@ -948,13 +996,16 @@ app.post("/ul_unlink", async function(req, res) {
 	if (SHA256(req.body.password) == user.object.password) {
 		delete user.object.linkedTo;
 		await db.set(user.username, user.object);
-		res.send("Successful!<br><a href=\"/manage\">Back to management settings</a><script>onload=function(){onload=null;setTimeout(function(){location.href='/manage'},1000);}</script>")
+		res.render(__dirname + "/redirector.jsembeds", {
+			target: "/manage",
+			msg: "Successful!"
+		});
 	} else {
 		return res.redirect("/manage");
 	}
 });
 
-app.post("/toggle_sharing", async function(req, res) {
+app.post("/toggle_sharing", async function (req, res) {
 	if (!req.cookies.token) {
 		return res.redirect("/");
 	}
@@ -965,10 +1016,13 @@ app.post("/toggle_sharing", async function(req, res) {
 	}
 	user.object.disableSharing = !user.object.disableSharing;
 	await db.set(user.username, user.object);
-	res.send("Successful!<br><a href=\"/manage\">Back to management settings</a><script>onload=function(){onload=null;setTimeout(function(){location.href='/manage'},1000);}</script>")
+	res.render(__dirname + "/redirector.jsembeds", {
+		target: "/manage",
+		msg: "Successful!"
+	});
 });
 
-app.post("/pro_apply", async function(req, res) {
+app.post("/pro_apply", async function (req, res) {
 	if (!req.cookies.token) {
 		return res.redirect("/");
 	}
@@ -977,12 +1031,24 @@ app.post("/pro_apply", async function(req, res) {
 		res.clearCookie("token");
 		return res.redirect("/");
 	}
-	if (user.object.isPRO) return res.status(400).send("You already have PRO flag.<br><a href=\"/manage\">Back to management settings</a><script>onload=function(){onload=null;setTimeout(function(){location.href='/manage'},1000);}</script>");
-	if (user.object.cannotPRO) return res.status(400).send("Your account was blocked from using this feature. Contact your system administrator.<br><a href=\"/manage\">Back to management settings</a><script>onload=function(){onload=null;setTimeout(function(){location.href='/manage'},1000);}</script>");
-	if (!(await db.get("pro_coder"))) return res.status(500).send("This server doesn't have PRO code functionality.<br><a href=\"/manage\">Back to management settings</a><script>onload=function(){onload=null;setTimeout(function(){location.href='/manage'},1000);}</script>");
+	if (user.object.isPRO) return res.status(500).render(__dirname + "/redirector.jsembeds", {
+		target: "/manage",
+		msg: "You already have a PRO flag."
+	});
+	if (user.object.cannotPRO) return res.status(500).render(__dirname + "/redirector.jsembeds", {
+		target: "/manage",
+		msg: "Access is denied."
+	});
+	if (!(await db.get("pro_coder"))) return res.status(500).render(__dirname + "/redirector.jsembeds", {
+		target: "/manage",
+		msg: "This server doesn't have PRO code functionality."
+	});
 	let codes = await db.get("pro_coder");
 	codes = codes.procodes || {};
-	if (!codes.hasOwnProperty(req.body.code)) return res.status(400).send("The code is invalid.<br><a href=\"/manage\">Back to management settings</a><script>onload=function(){onload=null;setTimeout(function(){location.href='/manage'},1000);}</script>");
+	if (!codes.hasOwnProperty(req.body.code)) return res.status(500).render(__dirname + "/redirector.jsembeds", {
+		target: "/manage",
+		msg: "Code invalid."
+	});
 	if (codes.hasOwnProperty(req.body.code)) {
 		if (codes[req.body.code].expiresAfterUsage) {
 			delete codes[req.body.code];
@@ -993,10 +1059,13 @@ app.post("/pro_apply", async function(req, res) {
 	await db.set("pro_coder", procoder);
 	user.object.isPRO = true;
 	await db.set(user.username, user.object);
-	res.send("PRO flag acquired successfully.<br><a href=\"/manage\">Back to management settings</a><script>onload=function(){onload=null;setTimeout(function(){location.href='/manage'},1000);}</script>");
+	return res.status(500).render(__dirname + "/redirector.jsembeds", {
+		target: "/manage",
+		msg: "PRO flag acquired successfully."
+	});
 });
 
-app.post("/removeprocode", async function(req, res) {
+app.post("/removeprocode", async function (req, res) {
 	if (!req.cookies.token) {
 		return res.redirect("/");
 	}
@@ -1005,19 +1074,31 @@ app.post("/removeprocode", async function(req, res) {
 		res.clearCookie("token");
 		return res.redirect("/");
 	}
-	if (!(await db.get("pro_coder"))) return res.status(500).send("This server doesn't have PRO code functionality.<br><a href=\"/manage\">Back to management settings</a><script>onload=function(){onload=null;setTimeout(function(){location.href='/manage'},1000);}</script>");
-	if (user.username !== "pro_coder") return res.status(500).send("Access is denied.<br><a href=\"/manage\">Back to management settings</a><script>onload=function(){onload=null;setTimeout(function(){location.href='/manage'},1000);}</script>");
+	if (!(await db.get("pro_coder"))) return res.status(500).render(__dirname + "/redirector.jsembeds", {
+		target: "/manage",
+		msg: "This server doesn't have PRO code functionality."
+	});
+	if (user.username !== "pro_coder") return res.status(403).render(__dirname + "/redirector.jsembeds", {
+		target: "/manage",
+		msg: "Access is denied."
+	});
 	let codes = user.object.procodes || {};
-	if (!codes.hasOwnProperty(req.body.code)) return res.status(400).send("The code is invalid.<br><a href=\"/manage\">Back to management settings</a><script>onload=function(){onload=null;setTimeout(function(){location.href='/manage'},1000);}</script>");
+	if (!codes.hasOwnProperty(req.body.code)) return res.status(404).render(__dirname + "/redirector.jsembeds", {
+		target: "/manage",
+		msg: "Code invalid."
+	});
 	if (codes.hasOwnProperty(req.body.code)) {
 		delete codes[req.body.code];
 	}
 	user.object.procodes = codes;
 	await db.set(user.username, user.object);
-	res.send("PRO code removed successfully.<br><a href=\"/manage\">Back to management settings</a><script>onload=function(){onload=null;setTimeout(function(){location.href='/manage'},1000);}</script>");
+	res.render(__dirname + "/redirector.jsembeds", {
+		target: "/manage",
+		msg: "Code removed successfully!"
+	});
 });
 
-app.post("/createprocode", async function(req, res) {
+app.post("/createprocode", async function (req, res) {
 	if (!req.cookies.token) {
 		return res.redirect("/");
 	}
@@ -1026,8 +1107,14 @@ app.post("/createprocode", async function(req, res) {
 		res.clearCookie("token");
 		return res.redirect("/");
 	}
-	if (!(await db.get("pro_coder"))) return res.status(500).send("This server doesn't have PRO code functionality.<br><a href=\"/manage\">Back to management settings</a><script>onload=function(){onload=null;setTimeout(function(){location.href='/manage'},1000);}</script>");
-	if (user.username !== "pro_coder") return res.status(500).send("Access is denied.<br><a href=\"/manage\">Back to management settings</a><script>onload=function(){onload=null;setTimeout(function(){location.href='/manage'},1000);}</script>");
+	if (!(await db.get("pro_coder"))) return res.status(500).render(__dirname + "/redirector.jsembeds", {
+		target: "/manage",
+		msg: "This server doesn't have PRO code functionality."
+	});
+	if (user.username !== "pro_coder") return res.status(403).render(__dirname + "/redirector.jsembeds", {
+		target: "/manage",
+		msg: "Access is denied."
+	});
 	let codes = user.object.procodes || {};
 	let code = genToken(8);
 	codes[code] = {
@@ -1035,18 +1122,22 @@ app.post("/createprocode", async function(req, res) {
 	};
 	user.object.procodes = codes;
 	await db.set(user.username, user.object);
-	res.send("PRO code created: <code>" + code + "</code>.<br><a href=\"/manage\">Back to management settings</a> (auto-redirect was disabled)");
+	res.status(403).render(__dirname + "/redirector.jsembeds", {
+		target: "/manage",
+		msg: "Code created successfully! <code>" + code + "</code>",
+		disableRedirect: true
+	});
 });
 
-app.get("/xterm/lib/xterm.js", function(req, res) {
+app.get("/xterm/lib/xterm.js", function (req, res) {
 	res.sendFile(__dirname + "/node_modules/xterm/lib/xterm.js");
 });
 
-app.get("/xterm/css/xterm.css", function(req, res) {
+app.get("/xterm/css/xterm.css", function (req, res) {
 	res.sendFile(__dirname + "/node_modules/xterm/css/xterm.css");
 });
 
-app.get("/apidocs", async function(req, res) {
+app.get("/apidocs", async function (req, res) {
 	if (!req.cookies.token) {
 		return res.redirect("/");
 	}
@@ -1060,55 +1151,18 @@ app.get("/apidocs", async function(req, res) {
 	});
 });
 
-app.get("/cors", async function(req, res) {
-	res.send(`Using CORS can be dangerous for your account. <br>
-To prevent malicious usage, you must have JavaScript enabled. <br>
-<noscript><b>No JavaScript is enabled. CORS access won't be allowed.</b> <br></noscript>
-Please input the domain name (must not include any wildcards) that can be used with your IP: <form action="/cors" method="post">
-	<input name="domain" placeholder="example.com"></input>
-	<input name="botpuzzl_solvd" id="botpuzzl_solvd" hidden type="hidden"></input>
-	<button disabled id="botpuzzl_snd">Send</button>
-</form>
-<hr>
-This modification is temporary. You should go on this page from time to time.
-<br>
-Available modifications on this IP:
-<br>
-${(ips[req.headers["cf-connecting-ip"] || req.headers["x-forwarded-for"] || req.ip || "0.0.0.0"]||[]).join("<br>")}
-<hr>
-If you see an unusual website domain, <a href="/corsReset">reset your CORS list</a>!
-<script>
-	if (navigator.webdriver) {
-		alert('Oops. You cannot use an automated browser!');
-	} else {
-		function botpuzzl() {
-			botpuzzl_solvd.value = "";
-			botpuzzl_snd.disabled = true;
-			fetch('/botpuzzl').then(function(res) {
-				res.text().then(function(txt) {
-					txt = txt.split("");
-					txt = txt.map(a => String.fromCharCode((a.charCodeAt() - 65) ^ 42));
-					txt = txt.join("");
-					txt = eval(txt);
-					botpuzzl_solvd.value = txt;
-					botpuzzl_snd.disabled = false;
-					setTimeout(function() {
-						botpuzzl();
-					}, 3000-Date.now()%3000);
-				});
-			});
-		}
-	}
-	botpuzzl();
-</script>`);
+app.get("/cors", async function (req, res) {
+	res.render(__dirname + "/corsmanager.jsembeds", {
+		ipmods: (ips[req.headers["cf-connecting-ip"] || req.headers["x-forwarded-for"] || req.ip || "0.0.0.0"]||[])
+	});
 });
 
-app.get("/botpuzzl", async function(req, res) {
+app.get("/botpuzzl", async function (req, res) {
 	if (!req.cookies.token) {
 		return res.send(
 			"alert('Oh no! You must log in to get to the puzzle.');location.href='/';".split("")
-				.map(a => String.fromCharCode((a.charCodeAt() ^ 42) + 65))
-				.join("")
+			.map(a => String.fromCharCode((a.charCodeAt() ^ 42) + 65))
+			.join("")
 		);
 	}
 	let user = await getUserByToken(req.cookies.token);
@@ -1116,28 +1170,28 @@ app.get("/botpuzzl", async function(req, res) {
 		res.clearCookie("token");
 		return res.send(
 			"alert('Oh no! You must log in to get to the puzzle.');location.href='/';".split("")
-				.map(a => String.fromCharCode((a.charCodeAt() ^ 42) + 65))
-				.join("")
+			.map(a => String.fromCharCode((a.charCodeAt() ^ 42) + 65))
+			.join("")
 		);
 	}
 	let tested = ["host", "user-agent", "accept", "accept-language", "accept-encoding", "connection"];
 	let insecure_b0tz = ["curl/", "Wget/"];
 	for (let hdr of tested) {
 		if (!req.headers[hdr]) return res.send(
-				"alert('Sorry, the bot check has failed. If you think this was in error, submit an issue on GitHub.');location.href='/';".split("")
-					.map(a => String.fromCharCode((a.charCodeAt() ^ 42) + 65))
-					.join("")
-			);
+			"alert('Sorry, the bot check has failed. If you think this was in error, submit an issue on GitHub.');location.href='/';".split("")
+			.map(a => String.fromCharCode((a.charCodeAt() ^ 42) + 65))
+			.join("")
+		);
 	}
 	for (let bot of insecure_b0tz) {
 		if (req.headers["user-agent"].includes(bot)) return res.send(
 			"alert('Sorry, the bot check has failed. If you think this was in error, submit an issue on GitHub.');location.href='/';".split("")
-				.map(a => String.fromCharCode((a.charCodeAt() ^ 42) + 65))
-				.join("")
+			.map(a => String.fromCharCode((a.charCodeAt() ^ 42) + 65))
+			.join("")
 		);
 	}
 	let evald_code = "";
-	let date = Date.now() / 3000;
+	let date = Date.now() / 5000;
 	date = Math.floor(date);
 	let ip = req.headers["cf-connecting-ip"] || req.headers["x-forwarded-for"] || req.ip || genToken(64);
 	let datandip = date + ip + ip + date;
@@ -1157,7 +1211,7 @@ app.get("/botpuzzl", async function(req, res) {
 	res.send(evald_code);
 });
 
-app.post("/cors", async function(req, res) {
+app.post("/cors", async function (req, res) {
 	if (!req.cookies.token) {
 		return res.redirect("/cors");
 	}
@@ -1168,10 +1222,13 @@ app.post("/cors", async function(req, res) {
 	}
 	let tested = ["host", "user-agent", "accept", "accept-language", "accept-encoding", "connection"];
 	let insecure_b0tz = ["curl/", "Wget/"];
-	for (let hdr of tested) if (!req.headers[hdr]) return res.redirect("/cors");
-	for (let bot of insecure_b0tz) if (req.headers["user-agent"].includes(bot)) return res.redirect("/cors");
+	for (let hdr of tested)
+		if (!req.headers[hdr]) return res.redirect("/cors");
+	for (let bot of insecure_b0tz)
+		if (req.headers["user-agent"].includes(bot)) return res.redirect("/cors");
+	if (new URL(req.headers.origin).hostname != req.hostname) return res.redirect("/cors");
 	let evald_code = "";
-	let date = Date.now() / 3000;
+	let date = Date.now() / 5000;
 	date = Math.floor(date);
 	let ip = req.headers["cf-connecting-ip"] || req.headers["x-forwarded-for"] || req.ip || genToken(64);
 	let datandip = date + ip + ip + date;
@@ -1188,35 +1245,45 @@ app.post("/cors", async function(req, res) {
 	}
 	if (evald_code.endsWith("+") || evald_code.endsWith("-")) evald_code = evald_code.split("", evald_code.length - 1).join("");
 	evald_code = eval(evald_code);
-	if (evald_code != req.body.botpuzzl_solvd) return res.send("An invalid bot verification code was passed... try again! (maybe you need to un-throttle your network speed!)<br><a href=\"/cors\">Back to CORS settings page</a><script>onload=function(){onload=null;setTimeout(function(){location.href='/cors'},1000);}</script>");
+	if (evald_code != req.body.botpuzzl_solvd) return res.render(__dirname + "/redirector.jsembeds", {
+		target: "/cors",
+		msg: "Invalid bot verification code. (Please make your network less slow!!)"
+	});
 	ip = req.headers["cf-connecting-ip"] || req.headers["x-forwarded-for"] || req.ip || "0.0.0.0";
 	if (!ips[ip]) ips[ip] = [];
-	if (String(req.body.domain).includes("*")) return res.send("You cannot use a wildcard with CORS!<br><a href=\"/cors\">Back to CORS settings page</a><script>onload=function(){onload=null;setTimeout(function(){location.href='/cors'},1000);}</script>");
 	ips[ip].push(req.body.domain);
-	res.send("Your network services can now use DuckCloud APIs!<br><a href=\"/cors\">Back to CORS settings page</a><script>onload=function(){onload=null;setTimeout(function(){location.href='/cors'},1000);}</script>");
+	res.render(__dirname + "/redirector.jsembeds", {
+		target: "/cors",
+		msg: "New network service can now use DuckCloud APIs!"
+	});
 });
-app.get("/corsReset", async function(req, res) {
+app.get("/corsReset", async function (req, res) {
 	let ip = req.headers["cf-connecting-ip"] || req.headers["x-forwarded-for"] || req.ip || "0.0.0.0";
 	ips[ip] = [];
-	res.send("Your network services can no longer use DuckCloud APIs.<br><a href=\"/cors\">Back to CORS settings page</a><script>onload=function(){onload=null;setTimeout(function(){location.href='/cors'},1000);}</script>");
+	res.render(__dirname + "/redirector.jsembeds", {
+		target: "/cors",
+		msg: "Network services can no longer use DuckCloud APIs."
+	});
 });
 
-app.use(function(req, res) {
+app.use(function (req, res) {
 	res.sendFile(__dirname + "/not_found.html");
 });
 
-io.on("connection", async function(client) {
+io.on("connection", async function (client) {
 	if (!client.handshake.headers.cookie) return client.disconnect();
 	if (!cookie.parse(client.handshake.headers.cookie).token) return client.disconnect();
 	let user = await getUserByToken(cookie.parse(client.handshake.headers.cookie).token);
 	if (!user) return client.disconnect();
 	let disconn = false;
-	client.on("disconnect", function() {
+	client.on("disconnect", function () {
 		disconn = true;
 	});
-	client.once("vmselect", function(vm) {
+	client.once("vmselect", function (vm) {
 		if (!Object.keys(user.object.virtuals)[Number(vm)]) return client.disconnect();
-		let a = all_features[user.object.virtuals[Object.keys(user.object.virtuals)[Number(vm)]]] || {ats: true};
+		let a = all_features[user.object.virtuals[Object.keys(user.object.virtuals)[Number(vm)]]] || {
+			ats: true
+		};
 		if (a.ats) {
 			client.emit("datad", "\r\nYour virtual machine is about to stop. To use this Linux console again, restart your VM.");
 			return client.disconnect();
@@ -1231,26 +1298,31 @@ io.on("connection", async function(client) {
 			client.emit("datad", a.shell.toString());
 		}
 		let workspace = emitter.goToWorkspace(user.object.virtuals[Object.keys(user.object.virtuals)[Number(vm)]]);
-		workspace.on("data", function(e) {
+		workspace.on("data", function (e) {
 			if (disconn) return;
 			client.emit("datad", e.toString());
 		});
-		workspace.on("deletion", function() {
+		workspace.on("deletion", function () {
 			if (disconn) return;
 			client.emit("datad", "\r\nYour virtual machine is about to stop. To use this Linux console again, restart your VM.")
 			return client.disconnect();
 		});
-		client.on("datad", function(e) {
+		client.on("datad", function (e) {
 			if (typeof e !== "string" && typeof e !== "number") {
-				disconn = true; return client.disconnect();
+				disconn = true;
+				return client.disconnect();
 			}
-			a.started_shell.write(String(e||""));
+			a.started_shell.write(String(e || ""));
 		});
-		client.on("resize", function(w, h) {
+		client.on("resize", function (w, h) {
 			if (typeof w !== "number" || typeof h !== "number") {
-				disconn = true; return client.disconnect();
+				disconn = true;
+				return client.disconnect();
 			}
-			a.exec.resize({ w: w, h: h });
+			a.exec.resize({
+				w: w,
+				h: h
+			});
 		})
 	});
 })

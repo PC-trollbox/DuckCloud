@@ -1,0 +1,35 @@
+<!DOCTYPE html>
+<html lang="en">
+	<head>
+	  <meta charset="UTF-8">
+	  <meta http-equiv="X-UA-Compatible" content="IE=edge">
+	  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+	  <title>Page(ReDir)@DuckCloud</title>
+	  <link rel="stylesheet" href="/regular.css"></link>
+	</head>
+	<body>
+		<h1>☁️ DuckCloud</h1>
+		<hr>
+		<a href="<nodejs-embed>target</nodejs-embed>" class="arrow">←</a> You're about to be redirected.
+        <br>
+		<nodejs-embed>msg</nodejs-embed>
+        <label id="isRedirDisabled"></label>
+        <noscript>
+            <hr>
+            <em>Redirecting was disabled by client script.</em>
+        </noscript>
+        <script>
+            let target = "<nodejs-embed>target</nodejs-embed>";
+            let redirectDisabled = "<nodejs-embed>disableRedirect</nodejs-embed>";
+            if (redirectDisabled != "true") {
+                document.getElementById("isRedirDisabled").innerHTML = "<hr> <em>You will be redirected in 1 second.</em>";
+                setTimeout(function() {
+                    document.getElementById("isRedirDisabled").innerHTML = "";
+                    location.href = target;
+                }, 1000);
+            } else {
+                document.getElementById("isRedirDisabled").innerHTML = "<hr> <em>Redirecting was disabled.</em>";
+            }
+        </script>
+	</body>
+</html>

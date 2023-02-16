@@ -1,0 +1,61 @@
+<!DOCTYPE html>
+<html lang="en">
+	<head>
+	  <meta charset="UTF-8">
+	  <meta http-equiv="X-UA-Compatible" content="IE=edge">
+	  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+	  <title>Page(ReDir)@DuckCloud</title>
+	  <link rel="stylesheet" href="/regular.css"></link>
+	</head>
+	<body>
+		<h1>☁️ DuckCloud</h1>
+		<hr>
+        Using CORS can be dangerous for your account. <br>
+        To prevent malicious usage, you must have JavaScript enabled. <br>
+        <noscript><b>No JavaScript is enabled. CORS access won't be allowed.</b> <br></noscript>
+        Please input the domain name (must not include any wildcards) that can be used with your IP: <form action="/cors" method="post">
+            <input name="domain" placeholder="example.com"></input>
+            <input name="botpuzzl_solvd" id="botpuzzl_solvd" hidden type="hidden"></input>
+            <button disabled id="botpuzzl_snd">Send</button>
+        </form>
+        <hr>
+        This modification is temporary. You should go on this page from time to time.
+        <br>
+        These domains can access DuckCloud APIs from your API:
+        <br>
+        <nodejs-embed>
+            let oops = ipmods;
+            let html = "";
+            for (let domain in oops) {
+                html = html + '<div class="object" style="top: ' + domain + 'px;">' + oops[domain] + '</div>';
+            }
+            html;
+        </nodejs-embed>
+        <hr>
+        If you see an unusual website domain, <a href="/corsReset">reset your CORS list</a>!
+        <script>
+            if (navigator.webdriver) {
+                alert('Oops. You cannot use an automated browser!');
+            } else {
+                function botpuzzl() {
+                    botpuzzl_solvd.value = "";
+                    botpuzzl_snd.disabled = true;
+                    fetch('/botpuzzl').then(function(res) {
+                        res.text().then(function(txt) {
+                            txt = txt.split("");
+                            txt = txt.map(a => String.fromCharCode((a.charCodeAt() - 65) ^ 42));
+                            txt = txt.join("");
+                            txt = eval(txt);
+                            botpuzzl_solvd.value = txt;
+                            botpuzzl_snd.disabled = false;
+                            setTimeout(function() {
+                                botpuzzl();
+                            }, 5000-Date.now()%5000);
+                        });
+                    });
+                }
+            }
+            botpuzzl();
+        </script>
+    </body>
+</html>
