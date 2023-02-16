@@ -52,6 +52,17 @@
 			<button>Toggle sharing</button>
 		</form>
 		<hr>
+		<b>Self-blocking</b> - Restricts features on your DuckCloud ID if you get seriously hacked. The blocking can be only taken off by contacting the system administrator.
+		<br>
+		Blocked features:
+		<form action="/selfblocking" method="POST">
+			<input type="checkbox" name="block_pro" <nodejs-embed>blocked_pro</nodejs-embed>></input> Block using PRO codes to get PRO flag. (also disables the PRO flag!) <br>
+			<input type="checkbox" name="block_enumVM" <nodejs-embed>blocked_enum</nodejs-embed>></input> Block enumeration of virtual machines. (renders the VMs useless until unblocked!) <br>
+			<input type="checkbox" name="block_ID"></input> Block login (renders the account useless until unblocked!) <br>
+			<input type="checkbox" name="block_ULID" <nodejs-embed>blocked_ultimatelogon</nodejs-embed>></input> Block UltimateLogon usage (won't unlink UltimateLogon) <br>
+			<button>Apply self blocking</button>
+		</form>	
+		<hr>
 		<b>Destroy the account</b> - Irreversible action to remove main data associated with you. The VMs will be stopped and removed. The DuckCloud ID will appear registerable again. The VMs will take a while if you have them running, so don't click away.
 		<form action="/destroyAccount" method="POST">
 			DuckCloud secret: <input name="password" type="password" required></input>

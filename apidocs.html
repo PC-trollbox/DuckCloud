@@ -20,6 +20,8 @@
         Your application logs in with a <code>Cookie</code> header - with a <code>token</code> cookie. This is applicable for both HTTP and Socket.IO APIs. The value for <code>Cookie</code> header if the user's token is abcdlol:
         <pre>token=abcdlol</pre>
         <hr>
+        <b>Using Node.JS?</b> If you are using POST /login, you can get transparently redirected by <code>fetch</code> and not get logged in. You need to use a package which supports cookies or just don't redirect and get the cookie from headers. Good luck on your app :)
+        <hr>
         <h2>HTTP API</h2>
         This is the main part of the API.
         <br>
@@ -267,6 +269,21 @@
         Creates a PRO token, which also will be returned on the page. You must do that from the <code>pro_coder</code> account!
         <hr>
         <b style="color: #00ff00;">// DuckCloud PRO tokens end HERE. Bots can use the endpoints declared here.</b>
+        <hr>
+        <h3>POST /selfblock</h3>
+        Params: encode in JSON or URLencoded
+        <br>
+        <code>block_pro</code> - set to <code>on</code> to block using PRO codes and the PRO version. Multiple VMs and PRO-RAM VMs will be kept, but you cannot create new ones.
+        <br>
+        <code>block_enumVM</code> - set to <code>on</code> to block virtual machines entirely.
+        <br>
+        <code>block_ID</code> - set to <code>on</code> to block THE WHOLE ACCOUNT.
+        <br>
+        <code>block_ULID</code> - set to <code>on</code> to block using the account through UltimateLogon. You can still use normal username/password.
+        <br>
+        Strip down some of core DuckCloud mechanics in case you get hacked. The best way to get your account secured is still creating a new password, but if you are in a situation you can't - DuckCloud selfblocking's got your back.
+        <br>
+        Your application still doesn't need to do this do the user, but if you wanna annoy them - feel free to use this feature.
         <hr>
         <h3>GET <a href="/xterm/lib/xterm.js">/xterm/lib/xterm.js</a></h3>
         The source code for xterm - the JavaScript part.

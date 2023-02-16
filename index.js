@@ -159,6 +159,7 @@ async function getUserByToken(token) {
 	let users = await db.list();
 	for (let user of users) {
 		let obj = await db.get(user);
+		if (obj.blockLogin) return null;
 		if (obj.token == token) return {
 			object: obj,
 			username: user,
@@ -248,6 +249,10 @@ app.post("/login", async function (req, res) {
 	}
 	let user = await db.get(req.body.username);
 	if (SHA256(req.body.password) == user.password) {
+		if (user.blockLogin) return res.status(403).render(__dirname + "/redirector.jsembeds", {
+			target: "/",
+			msg: "This operation has been cancelled due to self-blocking in effect on your account. Please contact the system administrator."
+		});
 		res.cookie("token", user.token, {
 			maxAge: 30 * 24 * 60 * 60 * 1000
 		});
@@ -267,7 +272,7 @@ app.get("/main", async function (req, res) {
 		return res.redirect("/");
 	}
 	let dockers = "";
-	if (user.object.virtuals) {
+	if (user.object.virtuals && !user.object.blockEnumVM) {
 		for (let vm in user.object.virtuals) {
 			let top = 0;
 			let container = docker.getContainer(user.object.virtuals[vm]);
@@ -292,7 +297,7 @@ app.get("/listContainer", async function (req, res) {
 		return res.redirect("/");
 	}
 	let dockers = [];
-	if (user.object.virtuals) {
+	if (user.object.virtuals && !user.object.blockEnumVM) {
 		for (let vm in user.object.virtuals) {
 			let container = docker.getContainer(user.object.virtuals[vm]);
 			let state = await container.inspect();
@@ -318,6 +323,10 @@ app.get("/settings/:vm", async function (req, res) {
 		return res.redirect("/");
 	}
 	if (!Object.keys(user.object.virtuals)[Number(req.params.vm)]) return res.redirect("/main");
+	if (user.object.blockEnumVM) return res.status(403).render(__dirname + "/redirector.jsembeds", {
+		target: "/",
+		msg: "This operation has been cancelled due to self-blocking in effect on your account. Please contact the system administrator."
+	});
 	let container = docker.getContainer(user.object.virtuals[Object.keys(user.object.virtuals)[Number(req.params.vm)]]);
 	let state = await container.inspect();
 	res.render(__dirname + "/template_2.jsembeds", {
@@ -338,6 +347,10 @@ app.get("/burn/:vm", async function (req, res) {
 		return res.redirect("/");
 	}
 	if (!Object.keys(user.object.virtuals)[Number(req.params.vm)]) return res.redirect("/main");
+	if (user.object.blockEnumVM) return res.status(403).render(__dirname + "/redirector.jsembeds", {
+		target: "/",
+		msg: "This operation has been cancelled due to self-blocking in effect on your account. Please contact the system administrator."
+	});
 	let exclude_name = Object.keys(user.object.virtuals)[Number(req.params.vm)];
 	let newList = {};
 	let container = docker.getContainer(user.object.virtuals[Object.keys(user.object.virtuals)[Number(req.params.vm)]]);
@@ -402,6 +415,10 @@ app.get("/shutoff/:vm", async function (req, res) {
 		return res.redirect("/");
 	}
 	if (!Object.keys(user.object.virtuals)[Number(req.params.vm)]) return res.redirect("/main");
+	if (user.object.blockEnumVM) return res.status(403).render(__dirname + "/redirector.jsembeds", {
+		target: "/",
+		msg: "This operation has been cancelled due to self-blocking in effect on your account. Please contact the system administrator."
+	});
 	let container = docker.getContainer(user.object.virtuals[Object.keys(user.object.virtuals)[Number(req.params.vm)]]);
 	let state = await container.inspect();
 	if (all_features[user.object.virtuals[Object.keys(user.object.virtuals)[Number(req.params.vm)]]] && state.State.Running) {
@@ -494,6 +511,10 @@ app.get("/chown/:vm", async function (req, res) {
 		return res.redirect("/");
 	}
 	if (!Object.keys(user.object.virtuals)[Number(req.params.vm)]) return res.redirect("/main");
+	if (user.object.blockEnumVM) return res.status(403).render(__dirname + "/redirector.jsembeds", {
+		target: "/",
+		msg: "This operation has been cancelled due to self-blocking in effect on your account. Please contact the system administrator."
+	});
 	res.render(__dirname + "/chown.jsembeds", {
 		username: he.encode(user.username),
 		vm_count: req.params.vm,
@@ -511,6 +532,10 @@ app.post("/chown/:vm", async function (req, res) {
 		return res.redirect("/");
 	}
 	if (!Object.keys(user.object.virtuals)[Number(req.params.vm)]) return res.redirect("/main");
+	if (user.object.blockEnumVM) return res.status(403).render(__dirname + "/redirector.jsembeds", {
+		target: "/",
+		msg: "This operation has been cancelled due to self-blocking in effect on your account. Please contact the system administrator."
+	});
 	let our_vm = Object.keys(user.object.virtuals)[Number(req.params.vm)];
 	if (req.body.username == user.username) return res.redirect("/chown/" + req.params.vm); //do not change the VM ownership
 	let newOwner = await db.get(req.body.username);
@@ -541,6 +566,10 @@ app.get("/ren/:vm", async function (req, res) {
 		return res.redirect("/");
 	}
 	if (!Object.keys(user.object.virtuals)[Number(req.params.vm)]) return res.redirect("/main");
+	if (user.object.blockEnumVM) return res.status(403).render(__dirname + "/redirector.jsembeds", {
+		target: "/",
+		msg: "This operation has been cancelled due to self-blocking in effect on your account. Please contact the system administrator."
+	});
 	res.render(__dirname + "/rename.jsembeds", {
 		username: he.encode(user.username),
 		vm_count: req.params.vm,
@@ -558,6 +587,10 @@ app.post("/ren/:vm", async function (req, res) {
 		return res.redirect("/");
 	}
 	if (!Object.keys(user.object.virtuals)[Number(req.params.vm)]) return res.redirect("/main");
+	if (user.object.blockEnumVM) return res.status(403).render(__dirname + "/redirector.jsembeds", {
+		target: "/",
+		msg: "This operation has been cancelled due to self-blocking in effect on your account. Please contact the system administrator."
+	});
 	let our_vm = Object.keys(user.object.virtuals)[Number(req.params.vm)];
 	while (Object.keys(user.object.virtuals).includes(our_vm)) our_vm = our_vm + " (1)";
 	let virtuals2 = {};
@@ -583,6 +616,7 @@ app.post("/newInput/:vm", async function (req, res) {
 		return res.redirect("/");
 	}
 	if (!Object.keys(user.object.virtuals)[Number(req.params.vm)]) return res.redirect("/main");
+	if (user.object.blockEnumVM) return res.send("\r\nThis operation has been cancelled due to self-blocking in effect on your account. Please contact the system administrator.");
 	let our_vm = all_features[user.object.virtuals[Object.keys(user.object.virtuals)[Number(req.params.vm)]]];
 	if (!our_vm) return res.end();
 	if (our_vm.ats) {
@@ -601,6 +635,7 @@ app.get("/sendInput/:vm", async function (req, res) {
 		return res.redirect("/");
 	}
 	if (!Object.keys(user.object.virtuals)[Number(req.params.vm)]) return res.redirect("/main");
+	if (user.object.blockEnumVM) return res.send("\r\nThis operation has been cancelled due to self-blocking in effect on your account. Please contact the system administrator.");
 	let our_vm = all_features[user.object.virtuals[Object.keys(user.object.virtuals)[Number(req.params.vm)]]];
 	if (!our_vm) return res.end();
 	if (our_vm.ats) {
@@ -621,6 +656,7 @@ app.get("/resize/:vm", async function (req, res) {
 		return res.redirect("/");
 	}
 	if (!Object.keys(user.object.virtuals)[Number(req.params.vm)]) return res.redirect("/main");
+	if (user.object.blockEnumVM) return res.send("\r\nThis operation has been cancelled due to self-blocking in effect on your account. Please contact the system administrator.");
 	let our_vm = all_features[user.object.virtuals[Object.keys(user.object.virtuals)[Number(req.params.vm)]]];
 	if (!our_vm) return res.end();
 	if (our_vm.ats) {
@@ -644,6 +680,10 @@ app.get("/newVM", async function (req, res) {
 		res.clearCookie("token");
 		return res.redirect("/");
 	}
+	if (user.object.blockEnumVM) return res.status(403).render(__dirname + "/redirector.jsembeds", {
+		target: "/",
+		msg: "This operation has been cancelled due to self-blocking in effect on your account. Please contact the system administrator."
+	});
 	if (!user.object.isPRO && Object.keys(user.object.virtuals).length >= 1) {
 		return res.status(400).render(__dirname + "/not_pro_yet.jsembeds", {
 			username: he.encode(user.username)
@@ -664,6 +704,10 @@ app.post("/newVM", async function (req, res) {
 		res.clearCookie("token");
 		return res.redirect("/");
 	}
+	if (user.object.blockEnumVM) return res.status(403).render(__dirname + "/redirector.jsembeds", {
+		target: "/",
+		msg: "This operation has been cancelled due to self-blocking in effect on your account. Please contact the system administrator."
+	});
 	if (!user.object.isPRO && Object.keys(user.object.virtuals).length >= 1) {
 		return res.status(400).render(__dirname + "/not_pro_yet.jsembeds", {
 			username: he.encode(user.username)
@@ -911,7 +955,10 @@ app.get("/manage", async function (req, res) {
 		</form>` : "Access is denied. Please log in as the correct user.",
 		pfm_isenabled: (user.object.isPRO) ? "has" : "doesn't have",
 		pfm_cmt_only_nonpro: (user.object.isPRO) ? "<!--" : "",
-		pfm_cmtend_only_nonpro: (user.object.isPRO) ? "-->" : ""
+		pfm_cmtend_only_nonpro: (user.object.isPRO) ? "-->" : "",
+		blocked_pro: (user.object.cannotPRO) ? "disabled checked" : "",
+		blocked_enum: (user.object.blockEnumVM) ? "disabled checked" : "",
+		blocked_ultimatelogon: (user.object.block_ul) ? "disabled checked" : ""
 	});
 });
 
@@ -1129,6 +1176,55 @@ app.post("/createprocode", async function (req, res) {
 	});
 });
 
+app.post("/selfblocking", async function (req, res) {
+	if (!req.cookies.token) {
+		return res.redirect("/");
+	}
+	let user = await getUserByToken(req.cookies.token);
+	if (!user) {
+		res.clearCookie("token");
+		return res.redirect("/");
+	}
+	let newFlags = {};
+	if (req.body.block_pro == "on" && !user.object.cannotPRO) {
+		newFlags.cannotPRO = true;
+		if (user.object.isPRO) newFlags.isPRO = false;
+	}
+	if (req.body.block_enumVM == "on" && !user.object.blockEnumVM) {
+		newFlags.blockEnumVM = true;
+	}
+	if (req.body.block_ID == "on" && !user.object.blockLogin) {
+		newFlags.blockLogin = true;
+	}
+	if (req.body.block_ULID == "on" && !user.object.block_ul) {
+		newFlags.block_ul = true;
+	}
+	let userfriendly = "";
+	for (let flag in newFlags) {
+		if (flag == "cannotPRO") {
+			userfriendly = userfriendly + "<em>Disabled the ability to gain PRO flag</em><br>";
+		} else if (flag == "isPRO") {
+			userfriendly = userfriendly + "<em>Disabled the PRO flag</em><br>";
+		} else if (flag == "blockEnumVM") {
+			userfriendly = userfriendly + "<em>Disabled the ability to use virtual machines</em><br>";
+		} else if (flag == "blockLogin") {
+			userfriendly = userfriendly + "<em>Disabled your account</em><br>";
+		} else if (flag == "block_ul") {
+			userfriendly = userfriendly + "<em>Disabled usage of UltimateLogon</em><br>";
+		} else {
+			userfriendly = userfriendly + `<em>Unknown flag <code>${he.encode(flag||"")}</code> set to <code>${he.encode(newFlags[flag]||"")}</code></em><br>`
+		}
+		user.object[flag] = newFlags[flag];
+	}
+	if (!userfriendly) userfriendly = "<b>No new self-blocks were introduced.</b>"
+	await db.set(user.username, user.object);
+	res.render(__dirname + "/redirector.jsembeds", {
+		target: "/manage",
+		msg: "Self-blocking applied successfully!<br>Blocked features:<br>" + userfriendly + "<br>Restrictions were applied as soon as this message popped up.",
+		disableRedirect: true
+	});
+});
+
 app.get("/xterm/lib/xterm.js", function (req, res) {
 	res.sendFile(__dirname + "/node_modules/xterm/lib/xterm.js");
 });
@@ -1284,7 +1380,13 @@ io.on("connection", async function (client) {
 		let a = all_features[user.object.virtuals[Object.keys(user.object.virtuals)[Number(vm)]]] || {
 			ats: true
 		};
+		if (user.object.blockEnumVM) {
+			disconn = true;
+			client.emit("datad", "\r\nThis operation has been cancelled due to self-blocking in effect on your account. Please contact the system administrator.");
+			return client.disconnect();
+		}
 		if (a.ats) {
+			disconn = true;
 			client.emit("datad", "\r\nYour virtual machine is about to stop. To use this Linux console again, restart your VM.");
 			return client.disconnect();
 		}
@@ -1298,25 +1400,49 @@ io.on("connection", async function (client) {
 			client.emit("datad", a.shell.toString());
 		}
 		let workspace = emitter.goToWorkspace(user.object.virtuals[Object.keys(user.object.virtuals)[Number(vm)]]);
-		workspace.on("data", function (e) {
+		workspace.on("data", async function (e) {
 			if (disconn) return;
+			user = await getUserByToken(cookie.parse(client.handshake.headers.cookie).token);
+			if (user.object.blockEnumVM) {
+				disconn = true;
+				client.emit("datad", "\r\nThis operation has been cancelled due to self-blocking in effect on your account. Please contact the system administrator.");
+				return client.disconnect();
+			}
 			client.emit("datad", e.toString());
 		});
-		workspace.on("deletion", function () {
+		workspace.on("deletion", async function () {
 			if (disconn) return;
+			user = await getUserByToken(cookie.parse(client.handshake.headers.cookie).token);
+			if (user.object.blockEnumVM) {
+				disconn = true;
+				client.emit("datad", "\r\nThis operation has been cancelled due to self-blocking in effect on your account. Please contact the system administrator.");
+				return client.disconnect();
+			}
 			client.emit("datad", "\r\nYour virtual machine is about to stop. To use this Linux console again, restart your VM.")
 			return client.disconnect();
 		});
-		client.on("datad", function (e) {
+		client.on("datad", async function (e) {
 			if (typeof e !== "string" && typeof e !== "number") {
 				disconn = true;
 				return client.disconnect();
 			}
+			user = await getUserByToken(cookie.parse(client.handshake.headers.cookie).token);
+			if (user.object.blockEnumVM) {
+				disconn = true;
+				client.emit("datad", "\r\nThis operation has been cancelled due to self-blocking in effect on your account. Please contact the system administrator.");
+				return client.disconnect();
+			}
 			a.started_shell.write(String(e || ""));
 		});
-		client.on("resize", function (w, h) {
+		client.on("resize", async function (w, h) {
 			if (typeof w !== "number" || typeof h !== "number") {
 				disconn = true;
+				return client.disconnect();
+			}
+			user = await getUserByToken(cookie.parse(client.handshake.headers.cookie).token);
+			if (user.object.blockEnumVM) {
+				disconn = true;
+				client.emit("datad", "\r\nThis operation has been cancelled due to self-blocking in effect on your account. Please contact the system administrator.");
 				return client.disconnect();
 			}
 			a.exec.resize({
