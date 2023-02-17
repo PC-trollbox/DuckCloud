@@ -193,8 +193,9 @@ app.use(function (req, res, next) {
 	let ip = req.headers["cf-connecting-ip"] || req.headers["x-forwarded-for"] || req.ip || "0.0.0.0";
 	if (ips.hasOwnProperty(ip)) {
 		if (ips[ip].includes(new URL(req.headers.origin || "http://non-existing.domain.loc").host)) {
-			res.set("Access-Control-Allow-Origin", "*");
+			res.set("Access-Control-Allow-Origin", req.headers.origin || "*");
 			res.set("Access-Control-Allow-Credentials", "true");
+			res.set("Vary", "Origin");
 		}
 	}
 	next();
