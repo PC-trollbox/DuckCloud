@@ -159,7 +159,7 @@ async function getUserByToken(token) {
 	let users = await db.list();
 	for (let user of users) {
 		let obj = await db.get(user);
-		if (obj.blockLogin) return null;
+		if (obj.blockLogin) continue;
 		if (obj.token == token) return {
 			object: obj,
 			username: user,
