@@ -1249,9 +1249,16 @@ app.get("/apidocs", async function (req, res) {
 });
 
 app.get("/cors", async function (req, res) {
-	res.render(__dirname + "/corsmanager.jsembeds", {
-		ipmods: (ips[req.headers["cf-connecting-ip"] || req.headers["x-forwarded-for"] || req.ip || "0.0.0.0"]||[])
-	});
+	if (new URL(req.headers["referer"] || `http://${req.hostname}`).hostname == req.hostname) {
+		res.render(__dirname + "/corsmanager.jsembeds", {
+			ipmods: (ips[req.headers["cf-connecting-ip"] || req.headers["x-forwarded-for"] || req.ip || "0.0.0.0"]||[])
+		});
+	} else {
+		res.render(__dirname + "/autoaddcors.jsembeds", {
+			refDom: he.encode(new URL(req.headers["referer"] || `http://${req.hostname}`).hostname),
+			refUrl: he.encode(encodeURI(req.headers["referer"] || `http://${req.hostname}`))
+		});
+	}
 });
 
 app.get("/botpuzzl", async function (req, res) {

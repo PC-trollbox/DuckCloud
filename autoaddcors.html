@@ -1,0 +1,49 @@
+<!DOCTYPE html>
+<html lang="en">
+	<head>
+	  <meta charset="UTF-8">
+	  <meta http-equiv="X-UA-Compatible" content="IE=edge">
+	  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+	  <title>Page(CORSAdd)@DuckCloud</title>
+	  <link rel="stylesheet" href="/regular.css"></link>
+	</head>
+	<body>
+		<h1>☁️ DuckCloud</h1>
+		<hr>
+        Would you like to allow <nodejs-embed>refDom</nodejs-embed> to be added to your CORS list? <br>
+        Sites in the CORS list can access DuckCloud APIs from the browser. This can be very dangerous! <br>
+        To modify your CORS list later, go to this same page but in a new tab. This will open up the CORS list and allow you to add more sites or deny all access. <br>
+        <form action="/cors" method="post">
+            <input name="domain" hidden type="hidden" value="<nodejs-embed>refDom</nodejs-embed>"></input>
+            <input name="botpuzzl_solvd" id="botpuzzl_solvd" hidden type="hidden"></input>
+            <button disabled id="botpuzzl_snd">Accept access</button>
+        </form>
+        <a href="<nodejs-embed>refUrl</nodejs-embed>">Return back to site</a>
+        <hr>
+        If you think this request is unusual, <a href="/corsReset">reset your CORS list</a>!
+        <script>
+            if (navigator.webdriver) {
+                alert('Oops. You cannot use an automated browser!');
+            } else {
+                function botpuzzl() {
+                    botpuzzl_solvd.value = "";
+                    botpuzzl_snd.disabled = true;
+                    fetch('/botpuzzl').then(function(res) {
+                        res.text().then(function(txt) {
+                            txt = txt.split("");
+                            txt = txt.map(a => String.fromCharCode((a.charCodeAt() - 65) ^ 42));
+                            txt = txt.join("");
+                            txt = eval(txt);
+                            botpuzzl_solvd.value = txt;
+                            botpuzzl_snd.disabled = false;
+                            setTimeout(function() {
+                                botpuzzl();
+                            }, 5000-Date.now()%5000);
+                        });
+                    });
+                }
+            }
+            botpuzzl();
+        </script>
+    </body>
+</html>
