@@ -27,7 +27,7 @@
             let oops = ipmods;
             let html = "";
             for (let domain in oops) {
-                html = html + '<div class="object" style="top: ' + domain + 'px;">' + oops[domain] + '</div>';
+                html = html + '<div class="object" style="top: ' + domain + 'px;">' + require('he').encode(oops[domain]) + '</div>';
             }
             html;
         </nodejs-embed>
