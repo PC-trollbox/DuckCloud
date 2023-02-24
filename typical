@@ -1,0 +1,5 @@
+#!/bin/bash
+# This file is used internally!!!! no need to use this outside of PC's server
+while true; do
+    cloudflared --config=/home/pc/.cloudflared/config-duckcloud.yml tunnel run duckcloud
+done

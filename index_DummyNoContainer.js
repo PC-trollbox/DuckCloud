@@ -5,9 +5,7 @@ const cookieParser = require("cookie-parser");
 const he = require("he");
 const fs = require("fs");
 const crypto = require("crypto");
-const dockerode = require('dockerode');
 const engine = require("jsembedtemplateengine");
-const docker = new dockerode();
 const app = express();
 const http = require("http").Server(app);
 const io = require("socket.io")(http, {
@@ -70,7 +68,6 @@ const promisifyStream = stream => new Promise((resolve, reject) => {
 	stream.on('end', () => resolve(myData))
 	stream.on('error', reject)
 });
-let all_features = {};
 engine(app, {
 	embedOpen: "<nodejs-embed>",
 	embedClose: "</nodejs-embed>"
@@ -88,55 +85,6 @@ app.use(bodyParser.json({
 }));
 app.use(cookieParser());
 
-emitter = {
-	workspaces: {},
-	createWorkspace: function (vm) {
-		return this.workspaces[vm] = {
-			emit: function (e, ...mit) {
-				if (e == "deletion") throw new Error("impossible");
-				if (!e) throw new Error("get me some events");
-				if (typeof e !== "string") throw new Error("omg this is really impossible to emit " + String(typeof e));
-				if (this.callbacks.hasOwnProperty(e)) {
-					for (let callback of this.callbacks[e]) {
-						callback(...mit)
-					}
-				}
-			},
-			on: function (e, mit) {
-				if (!e) throw new Error("get me some events");
-				if (typeof e !== "string") throw new Error("omg this is really impossible to emit " + String(typeof e));
-				if (typeof mit !== "function") throw new Error("omg this is really impossible to catch using " + String(typeof mit));
-				if (!this.callbacks.hasOwnProperty(e)) this.callbacks[e] = [];
-				this.callbacks[e].push(mit);
-			},
-			once: function (e, mit) {
-				if (!e) throw new Error("get me some events");
-				if (typeof e !== "string") throw new Error("omg this is really impossible to emit " + String(typeof e));
-				if (typeof mit !== "function") throw new Error("omg this is really impossible to catch using " + String(typeof mit));
-				if (!this.callbacks.hasOwnProperty(e)) this.callbacks[e] = [];
-				let regNum = this.callbacks[e].push(function (e, ...mit2) {
-					this.callbacks[e].splice(regNum, 1);
-					mit(e, ...mit2);
-				});
-			},
-			callbacks: {}
-		}
-	},
-	goToWorkspace: function (vm) {
-		return this.workspaces[vm] || this.createWorkspace(vm);
-	},
-	removeWorkspace: function (vm) {
-		if (!this.workspaces[vm]) this.workspaces[vm] = {
-			callbacks: {}
-		};
-		if (this.workspaces[vm].callbacks.hasOwnProperty("deletion")) {
-			for (let callback of this.workspaces[vm].callbacks["deletion"]) {
-				callback("");
-			}
-		}
-		delete this.workspaces[vm];
-	}
-}
 let ips = {};
 
 //SHA-256 generator
@@ -275,12 +223,8 @@ app.get("/main", async function (req, res) {
 	let dockers = "";
 	if (user.object.virtuals && !user.object.blockEnumVM) {
 		for (let vm in user.object.virtuals) {
-			let top = 0;
-			let container = docker.getContainer(user.object.virtuals[vm]);
-			let state = await container.inspect();
-			state = state.State.Running ? "online" : "offline";
-			top = (Object.keys(user.object.virtuals).indexOf(vm)) * 10;
-			dockers = dockers + "<a class=\"object vmsetlink\" href=\"/settings/" + Object.keys(user.object.virtuals).indexOf(vm) + "\" style=\"position: relative; top: " + top + "px;\"><b>" + he.encode(vm) + " </b><span class=\"" + state + "-icon\"></span><label class=\"arrow manage-vm\">→</label></a>";
+			let top = (Object.keys(user.object.virtuals).indexOf(vm)) * 10;
+			dockers = dockers + "<a class=\"object vmsetlink\" href=\"/settings/" + Object.keys(user.object.virtuals).indexOf(vm) + "\" style=\"position: relative; top: " + top + "px;\"><b>" + he.encode(vm) + " </b><span class=\"offline-icon\"></span><label class=\"arrow manage-vm\">→</label></a>";
 		}
 	}
 	res.render(__dirname + "/template.jsembeds", {
@@ -300,13 +244,10 @@ app.get("/listContainer", async function (req, res) {
 	let dockers = [];
 	if (user.object.virtuals && !user.object.blockEnumVM) {
 		for (let vm in user.object.virtuals) {
-			let container = docker.getContainer(user.object.virtuals[vm]);
-			let state = await container.inspect();
-			state = state.State.Running ? "online" : "offline";
 			dockers.push({
 				vmname: vm,
 				vmname_encoded: he.encode(vm),
-				status: state
+				status: "offline"
 			});
 		}
 	}
@@ -328,13 +269,11 @@ app.get("/settings/:vm", async function (req, res) {
 		target: "/",
 		msg: "This operation has been cancelled due to self-blocking in effect on your account. Please contact the system administrator."
 	});
-	let container = docker.getContainer(user.object.virtuals[Object.keys(user.object.virtuals)[Number(req.params.vm)]]);
-	let state = await container.inspect();
 	res.render(__dirname + "/template_2.jsembeds", {
 		username: he.encode(user.username),
 		vm_count: req.params.vm,
 		vm_name: he.encode(Object.keys(user.object.virtuals)[Number(req.params.vm)]),
-		switch: state.State.Running ? "Turn off" : "Turn on"
+		switch: "Using VM is not supported"
 	});
 });
 
@@ -354,55 +293,12 @@ app.get("/burn/:vm", async function (req, res) {
 	});
 	let exclude_name = Object.keys(user.object.virtuals)[Number(req.params.vm)];
 	let newList = {};
-	let container = docker.getContainer(user.object.virtuals[Object.keys(user.object.virtuals)[Number(req.params.vm)]]);
-	let state = await container.inspect();
-	let wasAlrRem = false;
-	if (state.State.Running) {
-		if (all_features[user.object.virtuals[Object.keys(user.object.virtuals)[Number(req.params.vm)]]]) {
-			if (!all_features[user.object.virtuals[Object.keys(user.object.virtuals)[Number(req.params.vm)]]].ats) {
-				all_features[user.object.virtuals[Object.keys(user.object.virtuals)[Number(req.params.vm)]]] = {
-					ats: true
-				};
-				wasAlrRem = true;
-				emitter.removeWorkspace(user.object.virtuals[Object.keys(user.object.virtuals)[Number(req.params.vm)]]);
-				for (let vm in user.object.virtuals) {
-					if (vm == exclude_name) continue;
-					newList[vm] = user.object.virtuals[vm];
-				}
-				user.object.virtuals = newList;
-				await db.set(user.username, user.object);
-				try {
-					await container.stop();
-				} catch {}
-			} else {
-				return res.redirect("/settings/" + req.params.vm);
-			}
-		} else {
-			all_features[user.object.virtuals[Object.keys(user.object.virtuals)[Number(req.params.vm)]]] = {
-				ats: true
-			};
-			wasAlrRem = true;
-			emitter.removeWorkspace(user.object.virtuals[Object.keys(user.object.virtuals)[Number(req.params.vm)]]);
-			for (let vm in user.object.virtuals) {
-				if (vm == exclude_name) continue;
-				newList[vm] = user.object.virtuals[vm];
-			}
-			user.object.virtuals = newList;
-			await db.set(user.username, user.object);
-			try {
-				await container.stop();
-			} catch {}
-		}
+	for (let vm in user.object.virtuals) {
+		if (vm == exclude_name) continue;
+		newList[vm] = user.object.virtuals[vm];
 	}
-	if (!wasAlrRem) {
-		for (let vm in user.object.virtuals) {
-			if (vm == exclude_name) continue;
-			newList[vm] = user.object.virtuals[vm];
-		}
-		user.object.virtuals = newList;
-		await db.set(user.username, user.object);
-	}
-	await container.remove();
+	user.object.virtuals = newList;
+	await db.set(user.username, user.object);
 	res.redirect("/main");
 });
 
@@ -420,85 +316,6 @@ app.get("/shutoff/:vm", async function (req, res) {
 		target: "/",
 		msg: "This operation has been cancelled due to self-blocking in effect on your account. Please contact the system administrator."
 	});
-	let container = docker.getContainer(user.object.virtuals[Object.keys(user.object.virtuals)[Number(req.params.vm)]]);
-	let state = await container.inspect();
-	if (all_features[user.object.virtuals[Object.keys(user.object.virtuals)[Number(req.params.vm)]]] && state.State.Running) {
-		if (all_features[user.object.virtuals[Object.keys(user.object.virtuals)[Number(req.params.vm)]]].ats) {
-			return res.redirect("/settings/" + req.params.vm);
-		}
-	}
-	if (state.State.Running) {
-		all_features[user.object.virtuals[Object.keys(user.object.virtuals)[Number(req.params.vm)]]] = {
-			ats: true
-		};
-		emitter.removeWorkspace(user.object.virtuals[Object.keys(user.object.virtuals)[Number(req.params.vm)]]);
-		try {
-			await container.stop();
-		} catch {}
-	}
-	if (!state.State.Running) {
-		try {
-			let d = emitter.goToWorkspace(user.object.virtuals[Object.keys(user.object.virtuals)[Number(req.params.vm)]]);
-			await container.start();
-			all_features[user.object.virtuals[Object.keys(user.object.virtuals)[Number(req.params.vm)]]] = {
-				shell: Buffer.from("Welcome to your DuckCloud VM!\r\n"),
-				ats: false
-			};
-			let our_vm = all_features[user.object.virtuals[Object.keys(user.object.virtuals)[Number(req.params.vm)]]];
-			our_vm.exec = await container.exec({
-				Cmd: ['/bin/bash'],
-				Tty: true,
-				AttachStdin: true,
-				AttachStdout: true,
-				AttachStderr: true,
-				Privileged: true
-			});
-			our_vm.started_shell = await our_vm.exec.start({
-				Tty: true,
-				stdin: true
-			});
-			our_vm.started_shell.on("data", function (a) {
-				if ((our_vm.shell.length + a.length) < require("buffer").constants.MAX_STRING_LENGTH) {
-					our_vm.shell = Buffer.concat([our_vm.shell, a]);
-					d.emit("data", a);
-					if (our_vm.shell.toString().includes("\x1b[H\x1b[2J")) {
-						our_vm.shell = Buffer.from(our_vm.shell.toString().split("\x1b[H\x1b[2J")[our_vm.shell.toString().split("\x1b[H\x1b[2J").length - 1]);
-					}
-					all_features[user.object.virtuals[Object.keys(user.object.virtuals)[Number(req.params.vm)]]] = our_vm;
-				} else {
-					if (a.length < require("buffer").constants.MAX_STRING_LENGTH) {
-						our_vm.shell = Buffer.concat([Buffer.from("Required cleaning of shell by Node.JS limits.\r\n"), a]);
-					}
-				}
-			});
-			our_vm.started_shell.on("end", async function () {
-				our_vm.ats = true;
-				emitter.removeWorkspace(user.object.virtuals[Object.keys(user.object.virtuals)[Number(req.params.vm)]]);
-				try {
-					await container.stop();
-				} catch {}
-				all_features[user.object.virtuals[Object.keys(user.object.virtuals)[Number(req.params.vm)]]] = {
-					ats: true
-				};
-				our_vm = {};
-			});
-			all_features[user.object.virtuals[Object.keys(user.object.virtuals)[Number(req.params.vm)]]] = our_vm;
-		} catch {
-			all_features[user.object.virtuals[Object.keys(user.object.virtuals)[Number(req.params.vm)]]] = {
-				ats: true
-			};
-			state = await container.inspect();
-			if (state.State.Running) {
-				emitter.removeWorkspace(user.object.virtuals[Object.keys(user.object.virtuals)[Number(req.params.vm)]]);
-				try {
-					await container.stop();
-				} catch {}
-			}
-			return res.status(500).render(__dirname + "/failed_to_start.jsembeds", {
-				username: he.encode(user.username)
-			});
-		}
-	}
 	res.redirect("/settings/" + req.params.vm);
 });
 
@@ -618,12 +435,7 @@ app.post("/newInput/:vm", async function (req, res) {
 	}
 	if (!Object.keys(user.object.virtuals)[Number(req.params.vm)]) return res.redirect("/main");
 	if (user.object.blockEnumVM) return res.send("\r\nThis operation has been cancelled due to self-blocking in effect on your account. Please contact the system administrator.");
-	let our_vm = all_features[user.object.virtuals[Object.keys(user.object.virtuals)[Number(req.params.vm)]]];
-	if (!our_vm) return res.end();
-	if (our_vm.ats) {
-		return res.send("\r\nYour virtual machine is about to stop. To use this Linux console again, restart your VM.");
-	}
-	res.send(our_vm.shell);
+	res.send("\r\nThis is a dummy version of DuckCloud, with Docker functionality removed. You cannot use this VM.");
 });
 
 app.get("/sendInput/:vm", async function (req, res) {
@@ -637,14 +449,7 @@ app.get("/sendInput/:vm", async function (req, res) {
 	}
 	if (!Object.keys(user.object.virtuals)[Number(req.params.vm)]) return res.redirect("/main");
 	if (user.object.blockEnumVM) return res.send("\r\nThis operation has been cancelled due to self-blocking in effect on your account. Please contact the system administrator.");
-	let our_vm = all_features[user.object.virtuals[Object.keys(user.object.virtuals)[Number(req.params.vm)]]];
-	if (!our_vm) return res.end();
-	if (our_vm.ats) {
-		return res.send("\r\nYour virtual machine is about to stop. To use this Linux console again, restart your VM.");
-	}
-	if (typeof req.query.new !== "string") return res.send("soft fail");
-	our_vm.started_shell.write(String(req.query.new || "") || "");
-	res.send("ok");
+	res.send("\r\nThis is a dummy version of DuckCloud, with Docker functionality removed. You cannot use this VM.");
 });
 
 app.get("/resize/:vm", async function (req, res) {
@@ -658,18 +463,7 @@ app.get("/resize/:vm", async function (req, res) {
 	}
 	if (!Object.keys(user.object.virtuals)[Number(req.params.vm)]) return res.redirect("/main");
 	if (user.object.blockEnumVM) return res.send("\r\nThis operation has been cancelled due to self-blocking in effect on your account. Please contact the system administrator.");
-	let our_vm = all_features[user.object.virtuals[Object.keys(user.object.virtuals)[Number(req.params.vm)]]];
-	if (!our_vm) return res.end();
-	if (our_vm.ats) {
-		return res.send("\r\nYour virtual machine is about to stop. To use this Linux console again, restart your VM.");
-	}
-	if (isNaN(Number(req.query.w)) || !isFinite(Number(req.query.w))) return res.send("soft fail");
-	if (isNaN(Number(req.query.h)) || !isFinite(Number(req.query.h))) return res.send("soft fail");
-	our_vm.exec.resize({
-		w: req.query.w,
-		h: req.query.h
-	});
-	res.send("ok");
+	res.send("\r\nThis is a dummy version of DuckCloud, with Docker functionality removed. You cannot use this VM.");
 });
 
 app.get("/newVM", async function (req, res) {
@@ -726,23 +520,7 @@ app.post("/newVM", async function (req, res) {
 	let distribs = ["debian", "archlinux", "duckcloud/suspiral"];
 	if (!distribs.includes(req.body.distro)) return res.status(400).end();
 
-	let d = await docker.createContainer({
-		Image: req.body.distro,
-		AttachStdin: false,
-		AttachStdout: true,
-		AttachStderr: true,
-		Tty: true,
-		Cmd: req.body.distro === "duckcloud/suspiral" ? ['sh', '/etc/init_exec.sh'] : ['/bin/bash'],
-		OpenStdin: false,
-		StdinOnce: false,
-		NetworkDisabled: ((req.body.shouldHaveNetworking || "off") == "off"),
-		HostConfig: {
-			Memory: ((req.body.shouldUse512mbRAM || "off") == "on") ? 536870912 : 134217728,
-			MemorySwap: ((req.body.shouldUse512mbRAM || "off") == "on") ? 537919488 : 135266304
-		}
-	});
-	let red = await d.inspect();
-	user.object.virtuals[req.body.vm_name] = red.Id;
+	user.object.virtuals[req.body.vm_name] = genToken(16);
 	await db.set(user.username, user.object);
 	res.redirect("/main");
 });
@@ -999,17 +777,6 @@ app.post("/destroyAccount", async function (req, res) {
 	if (SHA256(req.body.password) == user.object.password) {
 		await db.delete(user.username);
 		res.clearCookie("token");
-		for (let virtual in user.object.virtuals) {
-			let container = docker.getContainer(user.object.virtuals[virtual]);
-			let inspects = await container.inspect();
-			if (inspects.State.Running) {
-				emitter.removeWorkspace(user.object.virtuals[virtual]);
-				try {
-					await container.stop();
-				} catch {}
-			}
-			await container.remove();
-		}
 		res.redirect("/");
 	} else {
 		return res.redirect("/manage");
@@ -1262,97 +1029,17 @@ app.get("/cors", async function (req, res) {
 });
 
 app.get("/botpuzzl", async function (req, res) {
-	if (!req.cookies.token) {
-		return res.send(
-			"alert('Oh no! You must log in to get to the puzzle.');location.href='/';".split("")
-			.map(a => String.fromCharCode((a.charCodeAt() ^ 42) + 65))
-			.join("")
-		);
-	}
-	let user = await getUserByToken(req.cookies.token);
-	if (!user) {
-		res.clearCookie("token");
-		return res.send(
-			"alert('Oh no! You must log in to get to the puzzle.');location.href='/';".split("")
-			.map(a => String.fromCharCode((a.charCodeAt() ^ 42) + 65))
-			.join("")
-		);
-	}
-	let tested = ["host", "user-agent", "accept", "accept-language", "accept-encoding", "connection"];
-	let insecure_b0tz = ["curl/", "Wget/"];
-	for (let hdr of tested) {
-		if (!req.headers[hdr]) return res.send(
-			"alert('Sorry, the bot check has failed. If you think this was in error, submit an issue on GitHub.');location.href='/';".split("")
-			.map(a => String.fromCharCode((a.charCodeAt() ^ 42) + 65))
-			.join("")
-		);
-	}
-	for (let bot of insecure_b0tz) {
-		if (req.headers["user-agent"].includes(bot)) return res.send(
-			"alert('Sorry, the bot check has failed. If you think this was in error, submit an issue on GitHub.');location.href='/';".split("")
-			.map(a => String.fromCharCode((a.charCodeAt() ^ 42) + 65))
-			.join("")
-		);
-	}
-	let evald_code = "";
-	let date = Date.now() / 5000;
-	date = Math.floor(date);
-	let ip = req.headers["cf-connecting-ip"] || req.headers["x-forwarded-for"] || req.ip || genToken(64);
-	let datandip = date + ip + ip + date;
-	if (date % 10 > 5) datandip = datandip + datandip;
-	for (let a in datandip) {
-		evald_code = evald_code + Number(datandip[a].charCodeAt());
-		if (a % 2 == 0) {
-			if (a % 3 == 0) {
-				evald_code = evald_code + "+";
-			} else {
-				evald_code = evald_code + "-";
-			}
-		}
-	}
-	if (evald_code.endsWith("+") || evald_code.endsWith("-")) evald_code = evald_code.split("", evald_code.length - 1).join("");
-	evald_code = evald_code.split("").map(a => String.fromCharCode((a.charCodeAt() ^ 42) + 65)).join("");
-	res.send(evald_code);
+	return res.send(
+		"true;".split("")
+		.map(a => String.fromCharCode((a.charCodeAt() ^ 42) + 65))
+		.join("")
+	);
 });
 
 app.post("/cors", async function (req, res) {
 	if (!req.cookies.token) {
 		return res.redirect("/cors");
 	}
-	let user = await getUserByToken(req.cookies.token);
-	if (!user) {
-		res.clearCookie("token");
-		return res.redirect("/cors");
-	}
-	let tested = ["host", "user-agent", "accept", "accept-language", "accept-encoding", "connection"];
-	let insecure_b0tz = ["curl/", "Wget/"];
-	for (let hdr of tested)
-		if (!req.headers[hdr]) return res.redirect("/cors");
-	for (let bot of insecure_b0tz)
-		if (req.headers["user-agent"].includes(bot)) return res.redirect("/cors");
-	if (new URL(req.headers.origin).hostname != req.hostname) return res.redirect("/cors");
-	let evald_code = "";
-	let date = Date.now() / 5000;
-	date = Math.floor(date);
-	let ip = req.headers["cf-connecting-ip"] || req.headers["x-forwarded-for"] || req.ip || genToken(64);
-	let datandip = date + ip + ip + date;
-	if (date % 10 > 5) datandip = datandip + datandip;
-	for (let a in datandip) {
-		evald_code = evald_code + Number(datandip[a].charCodeAt());
-		if (a % 2 == 0) {
-			if (a % 3 == 0) {
-				evald_code = evald_code + "+";
-			} else {
-				evald_code = evald_code + "-";
-			}
-		}
-	}
-	if (evald_code.endsWith("+") || evald_code.endsWith("-")) evald_code = evald_code.split("", evald_code.length - 1).join("");
-	evald_code = eval(evald_code);
-	if (evald_code != req.body.botpuzzl_solvd) return res.render(__dirname + "/redirector.jsembeds", {
-		target: "/cors",
-		msg: "Invalid bot verification code. (Please make your network less slow!!)"
-	});
 	ip = req.headers["cf-connecting-ip"] || req.headers["x-forwarded-for"] || req.ip || "0.0.0.0";
 	if (!ips[ip]) ips[ip] = [];
 	ips[ip].push(req.body.domain);
@@ -1361,6 +1048,7 @@ app.post("/cors", async function (req, res) {
 		msg: "New network service can now use DuckCloud APIs!"
 	});
 });
+
 app.get("/corsReset", async function (req, res) {
 	let ip = req.headers["cf-connecting-ip"] || req.headers["x-forwarded-for"] || req.ip || "0.0.0.0";
 	ips[ip] = [];
@@ -1385,79 +1073,14 @@ io.on("connection", async function (client) {
 	});
 	client.once("vmselect", function (vm) {
 		if (!Object.keys(user.object.virtuals)[Number(vm)]) return client.disconnect();
-		let a = all_features[user.object.virtuals[Object.keys(user.object.virtuals)[Number(vm)]]] || {
-			ats: true
-		};
 		if (user.object.blockEnumVM) {
 			disconn = true;
 			client.emit("datad", "\r\nThis operation has been cancelled due to self-blocking in effect on your account. Please contact the system administrator.");
 			return client.disconnect();
 		}
-		if (a.ats) {
-			disconn = true;
-			client.emit("datad", "\r\nYour virtual machine is about to stop. To use this Linux console again, restart your VM.");
-			return client.disconnect();
-		}
-		if (a.shell.length > 131072) {
-			client.emit("datad", "DuckCloud VM buffer cleaning recommended. Please do a `clear` command as soon as possible. Only the last 128kb of shell will be sent.\r\n");
-			let shl = a.shell.toString();
-			shl = shl.match(/.{1,131072}/g);
-			shl = shl[shl.length - 1];
-			client.emit("datad", shl);
-		} else {
-			client.emit("datad", a.shell.toString());
-		}
-		let workspace = emitter.goToWorkspace(user.object.virtuals[Object.keys(user.object.virtuals)[Number(vm)]]);
-		workspace.on("data", async function (e) {
-			if (disconn) return;
-			user = await getUserByToken(cookie.parse(client.handshake.headers.cookie).token);
-			if (user.object.blockEnumVM) {
-				disconn = true;
-				client.emit("datad", "\r\nThis operation has been cancelled due to self-blocking in effect on your account. Please contact the system administrator.");
-				return client.disconnect();
-			}
-			client.emit("datad", e.toString());
-		});
-		workspace.on("deletion", async function () {
-			if (disconn) return;
-			user = await getUserByToken(cookie.parse(client.handshake.headers.cookie).token);
-			if (user.object.blockEnumVM) {
-				disconn = true;
-				client.emit("datad", "\r\nThis operation has been cancelled due to self-blocking in effect on your account. Please contact the system administrator.");
-				return client.disconnect();
-			}
-			client.emit("datad", "\r\nYour virtual machine is about to stop. To use this Linux console again, restart your VM.")
-			return client.disconnect();
-		});
-		client.on("datad", async function (e) {
-			if (typeof e !== "string" && typeof e !== "number") {
-				disconn = true;
-				return client.disconnect();
-			}
-			user = await getUserByToken(cookie.parse(client.handshake.headers.cookie).token);
-			if (user.object.blockEnumVM) {
-				disconn = true;
-				client.emit("datad", "\r\nThis operation has been cancelled due to self-blocking in effect on your account. Please contact the system administrator.");
-				return client.disconnect();
-			}
-			a.started_shell.write(String(e || ""));
-		});
-		client.on("resize", async function (w, h) {
-			if (typeof w !== "number" || typeof h !== "number") {
-				disconn = true;
-				return client.disconnect();
-			}
-			user = await getUserByToken(cookie.parse(client.handshake.headers.cookie).token);
-			if (user.object.blockEnumVM) {
-				disconn = true;
-				client.emit("datad", "\r\nThis operation has been cancelled due to self-blocking in effect on your account. Please contact the system administrator.");
-				return client.disconnect();
-			}
-			a.exec.resize({
-				w: w,
-				h: h
-			});
-		})
+		disconn = true;
+		client.emit("datad", "\r\nThis is a dummy version of DuckCloud, with Docker functionality removed. You cannot use this VM.");
+		return client.disconnect();
 	});
 })
 

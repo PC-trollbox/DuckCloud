@@ -8,7 +8,7 @@
 	  <link rel="stylesheet" href="/regular.css"></link>
 	</head>
 	<body>
-		<a href="/manage" style="text-decoration: none;" class="logged-in-as">🚪 <nodejs-embed>username</nodejs-embed></a>
+		<a href="/manage" class="logged-in-as">🚪 <nodejs-embed>username</nodejs-embed></a>
 		<h1>☁️ DuckCloud</h1>
 		<hr>
 		<a href="/main" class="arrow">←</a> | <b>DuckCloud APIs</b>
@@ -168,7 +168,7 @@
         <br>
         Removes the <code>token</code> cookie, and redirects to /.
         <hr>
-        <b style="color: #00ff00;">// Warning! DuckCloud integration with UltimateLogon STARTS HERE. These features are MEANT to be used by PEOPLE. Bots shouldn't rely on them - just use the POST /register, and everyone will understand you.</b>
+        <b class="likeComment">// Warning! DuckCloud integration with UltimateLogon STARTS HERE. These features are MEANT to be used by PEOPLE. Bots shouldn't rely on them - just use the POST /register, and everyone will understand you.</b>
         <hr>
         <h3>GET <a href="/ul_link">/ul_link</a></h3>
         Does <b>three</b> things:
@@ -202,7 +202,7 @@
         <br>
         Redirects the user to /main if they are logged in, otherwise does the configuration the user specified and returns to /.
         <hr>
-        <b style="color: #00ff00;">// DuckCloud integration with UltimateLogon ENDS HERE. Bots can use the endpoints declared here.</b>
+        <b class="likeComment">// DuckCloud integration with UltimateLogon ENDS HERE. Bots can use the endpoints declared here.</b>
         <hr>
         <h3>GET <a href="/manage">/manage</a></h3>
         <em>This operation requires proper logon. Users will get redirected to / if they have an incorrect token or didn't log in yet.</em>
@@ -239,7 +239,7 @@
         <br>
         The user's sharing option will be toggled on or off.
         <hr>
-        <b style="color: #00ff00;">// Warning! DuckCloud PRO tokens start HERE. Your client shouldn't really try administrating the tokens, as the response is always HTML.</b>
+        <b class="likeComment">// Warning! DuckCloud PRO tokens start HERE. Your client shouldn't really try administrating the tokens, as the response is always HTML.</b>
         <hr>
         <h3>POST /pro_apply</h3>
         <em>This operation requires proper logon. Users will get redirected to / if they have an incorrect token or didn't log in yet.</em>
@@ -268,7 +268,7 @@
         <br>
         Creates a PRO token, which also will be returned on the page. You must do that from the <code>pro_coder</code> account!
         <hr>
-        <b style="color: #00ff00;">// DuckCloud PRO tokens end HERE. Bots can use the endpoints declared here.</b>
+        <b class="likeComment">// DuckCloud PRO tokens end HERE. Bots can use the endpoints declared here.</b>
         <hr>
         <h3>POST /selfblock</h3>
         Params: encode in JSON or URLencoded
@@ -341,6 +341,6 @@
         <br>
         Tells the pty to adapt to the new dimensions - for example sets process.stdout.columns in Node.JS.
         <hr>
-        <b style="color: #00ff00;">// The API documentation stops HERE.</b>
+        <b class="likeComment">// The API documentation stops HERE.</b>
 	</body>
 </html>

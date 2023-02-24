@@ -83,6 +83,7 @@ a {
     top: 16px;
     right: 16px;
     z-index: 1000;
+    text-decoration: none;
 }
 
 .apis-notice {
@@ -115,4 +116,12 @@ pre {
 
 .hideWithoutHover:hover {
     color: white;
+}
+
+.termWidth {
+    width: 736px;
+}
+
+.likeComment {
+    color: #6ea158;
 }
