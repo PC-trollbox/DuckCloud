@@ -125,3 +125,17 @@ pre {
 .likeComment {
     color: #6ea158;
 }
+
+.isTerminal {
+    height: 432px;
+    width: 736px;
+    background: black;
+    color: white;
+    border: none;
+    font-family: courier-new, courier, monospace;
+    font-size: 15px;
+    word-break: break-all;
+    overflow-y: scroll;
+    overflow-x: hidden;
+    white-space: pre;
+}

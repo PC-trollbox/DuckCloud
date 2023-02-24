@@ -338,6 +338,30 @@ app.get("/settings/:vm", async function (req, res) {
 	});
 });
 
+app.get("/limitedSettings/:vm", async function (req, res) {
+	if (!req.cookies.token) {
+		return res.redirect("/");
+	}
+	let user = await getUserByToken(req.cookies.token);
+	if (!user) {
+		res.clearCookie("token");
+		return res.redirect("/");
+	}
+	if (!Object.keys(user.object.virtuals)[Number(req.params.vm)]) return res.redirect("/main");
+	if (user.object.blockEnumVM) return res.status(403).render(__dirname + "/redirector.jsembeds", {
+		target: "/",
+		msg: "This operation has been cancelled due to self-blocking in effect on your account. Please contact the system administrator."
+	});
+	let container = docker.getContainer(user.object.virtuals[Object.keys(user.object.virtuals)[Number(req.params.vm)]]);
+	let state = await container.inspect();
+	res.render(__dirname + "/limitedTemplate_2.jsembeds", {
+		username: he.encode(user.username),
+		vm_count: req.params.vm,
+		vm_name: he.encode(Object.keys(user.object.virtuals)[Number(req.params.vm)]),
+		switch: state.State.Running ? "Turn off" : "Turn on"
+	});
+});
+
 app.get("/burn/:vm", async function (req, res) {
 	if (!req.cookies.token) {
 		return res.redirect("/");

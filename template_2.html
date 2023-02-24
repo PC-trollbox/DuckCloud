@@ -14,7 +14,7 @@
 		<a href="/manage" class="logged-in-as">🚪 <nodejs-embed>username</nodejs-embed></a>
 		<h1>☁️ DuckCloud</h1>
 		<hr>
-		<a href="/" class="arrow">←</a> | <nodejs-embed>vm_name</nodejs-embed> | <a href="/shutoff/<nodejs-embed>vm_count</nodejs-embed>" onclick="document.body.insertAdjacentHTML('afterbegin','Do not click away! The page can be loading too long because Docker takes too long to stop a container.');"><nodejs-embed>switch</nodejs-embed></a> <a href="/burn/<nodejs-embed>vm_count</nodejs-embed>" onclick="return confirm('Are you sure?')">Remove VM</a> <a href="/chown/<nodejs-embed>vm_count</nodejs-embed>">Change Owner</a> <a href="/ren/<nodejs-embed>vm_count</nodejs-embed>">Rename VM</a>
+		<a href="/" class="arrow">←</a> | <nodejs-embed>vm_name</nodejs-embed> | <a href="/shutoff/<nodejs-embed>vm_count</nodejs-embed>" onclick="document.body.insertAdjacentHTML('afterbegin','Do not click away! The page can be loading too long because Docker takes too long to stop a container.');"><nodejs-embed>switch</nodejs-embed></a> <a href="/burn/<nodejs-embed>vm_count</nodejs-embed>" onclick="return confirm('Are you sure?')">Remove VM</a> <a href="/chown/<nodejs-embed>vm_count</nodejs-embed>">Change Owner</a> <a href="/ren/<nodejs-embed>vm_count</nodejs-embed>">Rename VM</a> <a href="/limitedSettings/<nodejs-embed>vm_count</nodejs-embed>">Limited Terminal</a>
 		<br>
 		<noscript><b>Sorry, but you cannot use the terminal of this VM.</b> If you want to use the terminal, <a href="https://enable-javascript.com/">please enable JavaScript</a>.</noscript>
 		<div id="term" class="object termWidth"></div>
@@ -28,15 +28,6 @@
 			term.resize(term.cols, term.rows);
 			socket.emit("resize", term.cols, term.rows);
 			socket.emit("vmselect", "<nodejs-embed>vm_count</nodejs-embed>");
-			let info = "";
-			let current_routine = false; //reason: mobile phone users can't use the terminal
-			function wait(ms) {
-				return new Promise(function(resolve) {
-					setTimeout(function() {
-						resolve("k");
-					}, ms)
-				});
-			}
 			socket.on("reconnect", function() {
 				term.clear();
 				term._core._renderService.clear();
@@ -47,19 +38,12 @@
 			socket.on("datad", function(e) {
 				term.write(e);
 			});
-			term.onKey(async function (e) {
+			term.onKey(function (e) {
 				socket.emit("datad", e.key);
 			});
-			copypaste.oninput = async function() {
-				setTimeout(async function() {
-					while (current_routine) {
-						await wait(100);
-					}
-					current_routine = true;
-					socket.emit("datad", (copypaste.value.replace("\n","\r")));
-					copypaste.value = "";
-					current_routine = false;
-				})
+			copypaste.oninput = function() {
+				socket.emit("datad", (copypaste.value.replace("\n","\r")));
+				copypaste.value = "";
 			}
 			term.textarea?.setAttribute("enterkeyhint", "send");
 		</script>
