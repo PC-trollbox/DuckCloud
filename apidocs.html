@@ -341,6 +341,27 @@
         <br>
         Tells the pty to adapt to the new dimensions - for example sets process.stdout.columns in Node.JS.
         <hr>
+        <hr>
+        <h3><code>emit("tcp_vmselect", Number vmNumber, Number port)</code></h3>
+        <br>
+        Registers your client for usage with the selected VM TCP connection. Can only be called once!
+        <hr>
+        <h3><code>on("datad", receive String data)</code></h3>
+        <br>
+        The TCP output. It's transmitted in hex.
+        <hr>
+        <h3><code>emit("datad", String data)</code></h3>
+        <br>
+        The TCP input. It's transmitted in hex.
+        <hr>
+        <h3><code>on("disconnect", ...)</code></h3>
+        <br>
+        TCP disconnected event. (container)
+        <hr>
+        <h3><code>disconnect()</code></h3>
+        <br>
+        TCP disconnected event. (client)
+        <hr>
         <b class="likeComment">// The API documentation stops HERE.</b>
 	</body>
 </html>

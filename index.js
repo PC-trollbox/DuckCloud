@@ -10,6 +10,7 @@ const engine = require("jsembedtemplateengine");
 const docker = new dockerode();
 const app = express();
 const http = require("http").Server(app);
+const net = require("net");
 const io = require("socket.io")(http, {
 	allowEIO3: true,
 	cookie: true
@@ -1482,6 +1483,55 @@ io.on("connection", async function (client) {
 				h: h
 			});
 		})
+	});
+	client.once("tcp_vmselect", async function (vm, port) {
+		if (!Object.keys(user.object.virtuals)[Number(vm)]) return client.disconnect();
+		if (typeof port !== "number") return client.disconnect();
+		if (port > 65536) return client.disconnect();
+		if (port < 0) return client.disconnect();
+		if (user.object.blockEnumVM) {
+			client.emit("datad", "This operation has been cancelled due to self-blocking in effect on your account. Please contact the system administrator.");
+			return client.disconnect();
+		}
+		let connection;
+		try {
+			let container = await docker.getContainer(user.object.virtuals[Object.keys(user.object.virtuals)[Number(vm)]]);
+        	let inspected = await container.inspect();
+			if (!inspected.State.Running) throw new Error("cancel the connection because it's shut off");
+			connection = net.createConnection(port, inspected.NetworkSettings.IPAddress);
+		} catch {
+			client.emit("datad", "Error creating any sort of connection. Ensure the VM is turned on, the server is started and there's no firewall blocking the request.");
+			return client.disconnect();
+		}
+		connection.on("error", function() {
+			client.emit("datad", "Error while using connection. Ensure the VM is turned on, the server is started and there's no firewall blocking the request.");
+			return client.disconnect();
+		});
+		connection.on("close", function() {
+			return client.disconnect();
+		});
+		connection.on("end", function() {
+			return client.disconnect();
+		});
+		client.on("datad", async function(tcpBuf) {
+			user = await getUserByToken(cookie.parse(client.handshake.headers.cookie).token);
+			if (user.object.blockEnumVM) {
+				client.emit("datad", "\r\nThis operation has been cancelled due to self-blocking in effect on your account. Please contact the system administrator.");
+				return client.disconnect();
+			}
+			if (typeof tcpBuf !== "string") {
+				connection.resetAndDestroy();
+				return client.disconnect();
+			}
+			connection.write(Buffer.from(tcpBuf, "hex"));
+		});
+		connection.on("data", function(tcpBuf) {
+			client.emit("datad", tcpBuf.toString("hex"));
+		});
+		client.once("disconnect", function() {
+			connection.resetAndDestroy();
+			return client.disconnect();
+		});
 	});
 })
 
