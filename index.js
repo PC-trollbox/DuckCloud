@@ -1519,14 +1519,10 @@ io.on("connection", async function (client) {
 				client.emit("datad", "\r\nThis operation has been cancelled due to self-blocking in effect on your account. Please contact the system administrator.");
 				return client.disconnect();
 			}
-			if (typeof tcpBuf !== "string") {
-				connection.resetAndDestroy();
-				return client.disconnect();
-			}
-			connection.write(Buffer.from(tcpBuf, "hex"));
+			connection.write(tcpBuf);
 		});
 		connection.on("data", function(tcpBuf) {
-			client.emit("datad", tcpBuf.toString("hex"));
+			client.emit("datad", tcpBuf);
 		});
 		client.once("disconnect", function() {
 			connection.resetAndDestroy();
