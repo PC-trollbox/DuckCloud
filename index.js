@@ -192,7 +192,12 @@ app.use(function (req, res, next) {
 			maxAge: 30 * 24 * 60 * 60 * 1000
 		});
 	}
-	if (fs.existsSync(__dirname + "/duckcloud.blok") && req.originalUrl != "/regular.css") return res.status(503).sendFile(__dirname + "/duckcloud_blocked.html");
+	if (fs.existsSync(__dirname + "/duckcloud.blok") && req.originalUrl != "/regular.css") {
+		let read = fs.readFileSync(__dirname + "/duckcloud.blok").toString();
+		return res.status(503).render(__dirname + "/duckcloud_blocked.jsembeds", {
+			shutdown_info: (read ? ("<hr>There's some info that the administrator left:<br><pre>" + read + "</pre>") : "")
+		});
+	}
 	let ip = req.headers["cf-connecting-ip"] || req.headers["x-forwarded-for"] || req.ip || "0.0.0.0";
 	if (ips.hasOwnProperty(ip)) {
 		if (ips[ip].includes(new URL(req.headers.origin || "http://non-existing.domain.loc").host)) {
