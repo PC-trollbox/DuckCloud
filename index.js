@@ -1108,7 +1108,7 @@ app.post("/pro_apply", async function (req, res) {
 		target: "/manage",
 		msg: "You already have a PRO flag."
 	});
-	if (user.object.cannotPRO) return res.status(500).render(__dirname + "/redirector.jsembeds", {
+	if (user.object.cannotPRO) return res.status(403).render(__dirname + "/redirector.jsembeds", {
 		target: "/manage",
 		msg: "Access is denied."
 	});
@@ -1118,7 +1118,7 @@ app.post("/pro_apply", async function (req, res) {
 	});
 	let codes = await db.get("pro_coder");
 	codes = codes.procodes || {};
-	if (!codes.hasOwnProperty(req.body.code)) return res.status(500).render(__dirname + "/redirector.jsembeds", {
+	if (!codes.hasOwnProperty(req.body.code)) return res.status(404).render(__dirname + "/redirector.jsembeds", {
 		target: "/manage",
 		msg: "Code invalid."
 	});
@@ -1132,7 +1132,7 @@ app.post("/pro_apply", async function (req, res) {
 	await db.set("pro_coder", procoder);
 	user.object.isPRO = true;
 	await db.set(user.username, user.object);
-	return res.status(500).render(__dirname + "/redirector.jsembeds", {
+	return res.render(__dirname + "/redirector.jsembeds", {
 		target: "/manage",
 		msg: "PRO flag acquired successfully."
 	});
@@ -1195,7 +1195,7 @@ app.post("/createprocode", async function (req, res) {
 	};
 	user.object.procodes = codes;
 	await db.set(user.username, user.object);
-	res.status(403).render(__dirname + "/redirector.jsembeds", {
+	res.render(__dirname + "/redirector.jsembeds", {
 		target: "/manage",
 		msg: "Code created successfully! <code>" + code + "</code>",
 		disableRedirect: true
@@ -1408,7 +1408,16 @@ io.on("connection", async function (client) {
 	client.on("disconnect", function () {
 		disconn = true;
 	});
-	client.once("vmselect", function (vm) {
+	client.once("vmselect", async function (vm) {
+		user = await getUserByToken(cookie.parse(client.handshake.headers.cookie).token);
+		if (user) {
+			if (user.object.blockEnumVM) {
+				client.emit("datad", "This operation has been cancelled due to self-blocking in effect on your account. Please contact the system administrator.");
+				return client.disconnect();
+			}
+		} else {
+			return client.disconnect();
+		}
 		if (!Object.keys(user.object.virtuals)[Number(vm)]) return client.disconnect();
 		let a = all_features[user.object.virtuals[Object.keys(user.object.virtuals)[Number(vm)]]] || {
 			ats: true
@@ -1436,9 +1445,12 @@ io.on("connection", async function (client) {
 		workspace.on("data", async function (e) {
 			if (disconn) return;
 			user = await getUserByToken(cookie.parse(client.handshake.headers.cookie).token);
-			if (user.object.blockEnumVM) {
-				disconn = true;
-				client.emit("datad", "\r\nThis operation has been cancelled due to self-blocking in effect on your account. Please contact the system administrator.");
+			if (user) {
+				if (user.object.blockEnumVM) {
+					client.emit("datad", "This operation has been cancelled due to self-blocking in effect on your account. Please contact the system administrator.");
+					return client.disconnect();
+				}
+			} else {
 				return client.disconnect();
 			}
 			client.emit("datad", e.toString());
@@ -1446,9 +1458,12 @@ io.on("connection", async function (client) {
 		workspace.on("deletion", async function () {
 			if (disconn) return;
 			user = await getUserByToken(cookie.parse(client.handshake.headers.cookie).token);
-			if (user.object.blockEnumVM) {
-				disconn = true;
-				client.emit("datad", "\r\nThis operation has been cancelled due to self-blocking in effect on your account. Please contact the system administrator.");
+			if (user) {
+				if (user.object.blockEnumVM) {
+					client.emit("datad", "This operation has been cancelled due to self-blocking in effect on your account. Please contact the system administrator.");
+					return client.disconnect();
+				}
+			} else {
 				return client.disconnect();
 			}
 			client.emit("datad", "\r\nYour virtual machine is about to stop. To use this Linux console again, restart your VM.")
@@ -1460,9 +1475,12 @@ io.on("connection", async function (client) {
 				return client.disconnect();
 			}
 			user = await getUserByToken(cookie.parse(client.handshake.headers.cookie).token);
-			if (user.object.blockEnumVM) {
-				disconn = true;
-				client.emit("datad", "\r\nThis operation has been cancelled due to self-blocking in effect on your account. Please contact the system administrator.");
+			if (user) {
+				if (user.object.blockEnumVM) {
+					client.emit("datad", "This operation has been cancelled due to self-blocking in effect on your account. Please contact the system administrator.");
+					return client.disconnect();
+				}
+			} else {
 				return client.disconnect();
 			}
 			a.started_shell.write(String(e || ""));
@@ -1473,9 +1491,13 @@ io.on("connection", async function (client) {
 				return client.disconnect();
 			}
 			user = await getUserByToken(cookie.parse(client.handshake.headers.cookie).token);
-			if (user.object.blockEnumVM) {
-				disconn = true;
-				client.emit("datad", "\r\nThis operation has been cancelled due to self-blocking in effect on your account. Please contact the system administrator.");
+			if (user) {
+				if (user.object.blockEnumVM) {
+					disconn = true;
+					client.emit("datad", "\r\nThis operation has been cancelled due to self-blocking in effect on your account. Please contact the system administrator.");
+					return client.disconnect();
+				}
+			} else {
 				return client.disconnect();
 			}
 			a.exec.resize({
@@ -1485,14 +1507,19 @@ io.on("connection", async function (client) {
 		})
 	});
 	client.once("tcp_vmselect", async function (vm, port) {
+		user = await getUserByToken(cookie.parse(client.handshake.headers.cookie).token);
+		if (user) {
+			if (user.object.blockEnumVM) {
+				client.emit("datad", "This operation has been cancelled due to self-blocking in effect on your account. Please contact the system administrator.");
+				return client.disconnect();
+			}
+		} else {
+			return client.disconnect();
+		}
 		if (!Object.keys(user.object.virtuals)[Number(vm)]) return client.disconnect();
 		if (typeof port !== "number") return client.disconnect();
 		if (port > 65536) return client.disconnect();
 		if (port < 0) return client.disconnect();
-		if (user.object.blockEnumVM) {
-			client.emit("datad", "This operation has been cancelled due to self-blocking in effect on your account. Please contact the system administrator.");
-			return client.disconnect();
-		}
 		// TCP Socket handling
 		let connection;
 		try {
@@ -1514,14 +1541,27 @@ io.on("connection", async function (client) {
 		connection.on("end", function() {
 			return client.disconnect();
 		});
-		connection.on("data", function(tcpBuf) {
+		connection.on("data", async function(tcpBuf) {
+			user = await getUserByToken(cookie.parse(client.handshake.headers.cookie).token);
+			if (user) {
+				if (user.object.blockEnumVM) {
+					client.emit("datad", "\r\nThis operation has been cancelled due to self-blocking in effect on your account. Please contact the system administrator.");
+					return client.disconnect();
+				}
+			} else {
+				return client.disconnect();
+			}
 			client.emit("datad", tcpBuf);
 		});
 		// Socket.IO handling
 		client.on("datad", async function(tcpBuf) {
 			user = await getUserByToken(cookie.parse(client.handshake.headers.cookie).token);
-			if (user.object.blockEnumVM) {
-				client.emit("datad", "\r\nThis operation has been cancelled due to self-blocking in effect on your account. Please contact the system administrator.");
+			if (user) {
+				if (user.object.blockEnumVM) {
+					client.emit("datad", "\r\nThis operation has been cancelled due to self-blocking in effect on your account. Please contact the system administrator.");
+					return client.disconnect();
+				}
+			} else {
 				return client.disconnect();
 			}
 			connection.write(tcpBuf);
