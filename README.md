@@ -20,5 +20,8 @@ You can also restrict the user from getting the PRO flag by using this feature, 
 ### Database editing
 Create a file called `db.lok`, then you can edit the database. After you have done the editing, remove `db.lok`, otherwise the site won't answer.
 
+### Server update warning
+Warn your users about a possible update by creating `duckcloud.blok`. It's ultimate, restricting any user from logging in until a restart has completed. Notice that you'll need to remove `duckcloud.blok` after updating, otherwise the site will still be blocked.
+
 ## TCP Tunnelling
 Use `testTCPConnect.js` for TCP tunnelling. Also check out [duckcl](https://www.npmjs.com/package/duckcloud-cli)oud-cli on npm for the `forward` command

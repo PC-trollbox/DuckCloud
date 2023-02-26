@@ -1,3 +1,3 @@
-#skiplines 790
+#skiplines 792
 #removeline
 	if (!req.query.deviceID) res.redirect("https://ultimatelogon.pcprojects.tk/oauth?requestToken=a&followLink=" + encodeURIComponent("https://" + req.hostname + "/ul_link") + "&companyName=DuckCloud");

@@ -157,6 +157,7 @@ function genToken(long = 16) {
 
 //Get user by token
 async function getUserByToken(token) {
+	if (fs.existsSync(__dirname + "/duckcloud.blok")) return null;
 	let users = await db.list();
 	for (let user of users) {
 		let obj = await db.get(user);
@@ -184,13 +185,14 @@ async function findUserByDuckCloudAssignedToken(token) {
 	return null;
 }
 
-//Automatic session extension
+//Automatic session extension and more
 app.use(function (req, res, next) {
 	if (req.cookies.token) {
 		res.cookie("token", req.cookies.token, {
 			maxAge: 30 * 24 * 60 * 60 * 1000
 		});
 	}
+	if (fs.existsSync(__dirname + "/duckcloud.blok") && req.originalUrl != "/regular.css") return res.status(503).sendFile(__dirname + "/duckcloud_blocked.html");
 	let ip = req.headers["cf-connecting-ip"] || req.headers["x-forwarded-for"] || req.ip || "0.0.0.0";
 	if (ips.hasOwnProperty(ip)) {
 		if (ips[ip].includes(new URL(req.headers.origin || "http://non-existing.domain.loc").host)) {
