@@ -1493,6 +1493,7 @@ io.on("connection", async function (client) {
 			client.emit("datad", "This operation has been cancelled due to self-blocking in effect on your account. Please contact the system administrator.");
 			return client.disconnect();
 		}
+		// TCP Socket handling
 		let connection;
 		try {
 			let container = await docker.getContainer(user.object.virtuals[Object.keys(user.object.virtuals)[Number(vm)]]);
@@ -1513,6 +1514,10 @@ io.on("connection", async function (client) {
 		connection.on("end", function() {
 			return client.disconnect();
 		});
+		connection.on("data", function(tcpBuf) {
+			client.emit("datad", tcpBuf);
+		});
+		// Socket.IO handling
 		client.on("datad", async function(tcpBuf) {
 			user = await getUserByToken(cookie.parse(client.handshake.headers.cookie).token);
 			if (user.object.blockEnumVM) {
@@ -1520,9 +1525,6 @@ io.on("connection", async function (client) {
 				return client.disconnect();
 			}
 			connection.write(tcpBuf);
-		});
-		connection.on("data", function(tcpBuf) {
-			client.emit("datad", tcpBuf);
 		});
 		client.once("disconnect", function() {
 			connection.resetAndDestroy();

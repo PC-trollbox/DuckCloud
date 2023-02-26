@@ -19,3 +19,6 @@ You can also restrict the user from getting the PRO flag by using this feature, 
 
 ### Database editing
 Create a file called `db.lok`, then you can edit the database. After you have done the editing, remove `db.lok`, otherwise the site won't answer.
+
+## TCP Tunnelling
+Use `testTCPConnect.js` for TCP tunnelling. Also check out [duckcl](https://www.npmjs.com/package/duckcloud-cli)oud-cli on npm for the `forward` command

@@ -26,6 +26,9 @@ if (port < 0 || port > 65535) {
 console.log("will be connecting to port", port, ", to change please configure testTCPConnect.js");
 
 let srv = net.createServer(function(socket) {
+	let timeoutId = -1;
+	let pkqueue = [];
+	// Socket.IO handling
 	let socket2 = io(duckcloud_api, {
 		transportOptions: {
 			polling: {
@@ -42,7 +45,20 @@ let srv = net.createServer(function(socket) {
 	socket2.on("disconnect", function() {
 		socket.destroy();
 	});
+	socket2.on("connect", function() { // thx nicejsisverycool; also check out `duckcl` :)
+		clearInterval(timeoutId);
+		timeoutId = setInterval(() => {
+			for (let i = 0; i < pkqueue.length; i++) {
+				socket2.emit("datad", pkqueue.shift());
+			}
+		}, 100);
+	});
+	// TCP Socket handling
 	socket.on("data", function(tcpBuf) {
+		if (!socket2.connected) {
+			pkqueue.push(tcpBuf); // thx nicejsisverycool; also check out `duckcl` :)
+			return;
+		}
 		socket2.emit("datad", tcpBuf);
 	});
 	socket.on("end", function() {
