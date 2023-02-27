@@ -118,6 +118,22 @@
         <br>
         Changes VM name. Attempts redirecting to /settings/:vmNumber on success.
         <hr>
+        <h3>GET <a href="/whitectl/0">/whitectl/:vmNumber</a></h3>
+        <em>This operation requires proper logon. Users will get redirected to / if they have an incorrect token or didn't log in yet.</em>
+        <br>
+        Shows a GUI whitelisting control panel.
+        <hr>
+        <h3>POST /whitectl/:vmNumber</h3>
+        <em>This operation requires proper logon. Users will get redirected to / if they have an incorrect token or didn't log in yet.</em>
+        <br>
+        Params: encode in JSON or URLencoded
+        <br>
+        <code>based</code> - 0 for whitelist (username required), 1 for click-based (toggle-only)
+        <br>
+        <code>username</code> - who to whitelist
+        <br>
+        Adds an user to the whitelist or toggles click-based access control.
+        <hr>
         <h3>POST /newInput/:vmNumber</h3>
         <em>This operation requires proper logon. Users will get redirected to / if they have an incorrect token or didn't log in yet.</em>
         <br>
@@ -342,9 +358,13 @@
         Tells the pty to adapt to the new dimensions - for example sets process.stdout.columns in Node.JS.
         <hr>
         <hr>
-        <h3><code>emit("tcp_vmselect", Number vmNumber, Number port)</code></h3>
+        <h3><code>emit("tcp_vmselect", Number vmNumber || String vmId, Number port)</code></h3>
         <br>
         Registers your client for usage with the selected VM TCP connection. Can only be called once!
+        <br>
+        If String vmId is used, you must be included in the whitelist or click-based access control must be enabled on the target VM.
+        <br>
+        And the VM, of course, has to exist.
         <hr>
         <h3><code>on("datad", receive String data)</code></h3>
         <br>

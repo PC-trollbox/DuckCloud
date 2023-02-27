@@ -1,0 +1,47 @@
+<!DOCTYPE html>
+<html lang="en">
+	<head>
+	  <meta charset="UTF-8">
+	  <meta http-equiv="X-UA-Compatible" content="IE=edge">
+	  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+	  <title>Powered by DuckCloud</title>
+	  <link rel="stylesheet" href="/regular.css"></link>
+	</head>
+	<body>
+		<a href="/manage" class="logged-in-as">🚪 <nodejs-embed>username</nodejs-embed></a>
+		<h1>☁️ DuckCloud</h1>
+		<hr>
+		<a href="/settings/<nodejs-embed>vm_count</nodejs-embed>" class="arrow">←</a> | <nodejs-embed>vm_name</nodejs-embed> | <a href="/whitectlReset/<nodejs-embed>vm_count</nodejs-embed>">reset all control settings</a>
+		<br>
+		This page is being protected by DuckCloud
+		<br>
+        Description about this page:
+        <br>
+        <em>You can allow access to some VM ports.</em>
+        <hr>
+		<b>Sharing data</b>: <code><nodejs-embed>vm_id</nodejs-embed></code>
+		<br>
+		Share this string to share your TCP ports.
+		<hr>
+		<b>Whitelist-based access control</b>
+		<br>
+		You can invite ∞ more users.
+		<br>
+		<nodejs-embed>whitelist_list.join("<br>")</nodejs-embed>
+		<br>
+		<form action="/whitectl/<nodejs-embed>vm_count</nodejs-embed>" method="post">
+			<input name="based" value="0" hidden type="hidden"></input>
+			<input name="username"></input>
+			<button>share</button>
+		</form>
+		<hr>
+		<b>Click-based access control</b>
+		<br>
+		Click this button to allow every DuckCloud user that exists to access any TCP port you opened on this VM. This is very dangerous if someone finds out your ID.
+		<br>
+		<form action="/whitectl/<nodejs-embed>vm_count</nodejs-embed>" method="post">
+			<input name="based" value="1" hidden type="hidden"></input>
+			<button><nodejs-embed>shareUn</nodejs-embed>share</button>
+		</form>
+	</body>
+</html>

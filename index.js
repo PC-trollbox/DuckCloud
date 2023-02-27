@@ -284,7 +284,7 @@ app.get("/main", async function (req, res) {
 	if (user.object.virtuals && !user.object.blockEnumVM) {
 		for (let vm in user.object.virtuals) {
 			let top = 0;
-			let container = docker.getContainer(user.object.virtuals[vm]);
+			let container = docker.getContainer(user.object.virtuals[vm].id);
 			let state = await container.inspect();
 			state = state.State.Running ? "online" : "offline";
 			top = (Object.keys(user.object.virtuals).indexOf(vm)) * 10;
@@ -308,7 +308,7 @@ app.get("/listContainer", async function (req, res) {
 	let dockers = [];
 	if (user.object.virtuals && !user.object.blockEnumVM) {
 		for (let vm in user.object.virtuals) {
-			let container = docker.getContainer(user.object.virtuals[vm]);
+			let container = docker.getContainer(user.object.virtuals[vm].id);
 			let state = await container.inspect();
 			state = state.State.Running ? "online" : "offline";
 			dockers.push({
@@ -336,33 +336,9 @@ app.get("/settings/:vm", async function (req, res) {
 		target: "/",
 		msg: "This operation has been cancelled due to self-blocking in effect on your account. Please contact the system administrator."
 	});
-	let container = docker.getContainer(user.object.virtuals[Object.keys(user.object.virtuals)[Number(req.params.vm)]]);
+	let container = docker.getContainer(user.object.virtuals[Object.keys(user.object.virtuals)[Number(req.params.vm)]].id);
 	let state = await container.inspect();
 	res.render(__dirname + "/template_2.jsembeds", {
-		username: he.encode(user.username),
-		vm_count: req.params.vm,
-		vm_name: he.encode(Object.keys(user.object.virtuals)[Number(req.params.vm)]),
-		switch: state.State.Running ? "Turn off" : "Turn on"
-	});
-});
-
-app.get("/limitedSettings/:vm", async function (req, res) {
-	if (!req.cookies.token) {
-		return res.redirect("/");
-	}
-	let user = await getUserByToken(req.cookies.token);
-	if (!user) {
-		res.clearCookie("token");
-		return res.redirect("/");
-	}
-	if (!Object.keys(user.object.virtuals)[Number(req.params.vm)]) return res.redirect("/main");
-	if (user.object.blockEnumVM) return res.status(403).render(__dirname + "/redirector.jsembeds", {
-		target: "/",
-		msg: "This operation has been cancelled due to self-blocking in effect on your account. Please contact the system administrator."
-	});
-	let container = docker.getContainer(user.object.virtuals[Object.keys(user.object.virtuals)[Number(req.params.vm)]]);
-	let state = await container.inspect();
-	res.render(__dirname + "/limitedTemplate_2.jsembeds", {
 		username: he.encode(user.username),
 		vm_count: req.params.vm,
 		vm_name: he.encode(Object.keys(user.object.virtuals)[Number(req.params.vm)]),
@@ -386,17 +362,17 @@ app.get("/burn/:vm", async function (req, res) {
 	});
 	let exclude_name = Object.keys(user.object.virtuals)[Number(req.params.vm)];
 	let newList = {};
-	let container = docker.getContainer(user.object.virtuals[Object.keys(user.object.virtuals)[Number(req.params.vm)]]);
+	let container = docker.getContainer(user.object.virtuals[Object.keys(user.object.virtuals)[Number(req.params.vm)]].id);
 	let state = await container.inspect();
 	let wasAlrRem = false;
 	if (state.State.Running) {
-		if (all_features[user.object.virtuals[Object.keys(user.object.virtuals)[Number(req.params.vm)]]]) {
-			if (!all_features[user.object.virtuals[Object.keys(user.object.virtuals)[Number(req.params.vm)]]].ats) {
-				all_features[user.object.virtuals[Object.keys(user.object.virtuals)[Number(req.params.vm)]]] = {
+		if (all_features[user.object.virtuals[Object.keys(user.object.virtuals)[Number(req.params.vm)]].id]) {
+			if (!all_features[user.object.virtuals[Object.keys(user.object.virtuals)[Number(req.params.vm)]].id].ats) {
+				all_features[user.object.virtuals[Object.keys(user.object.virtuals)[Number(req.params.vm)]].id] = {
 					ats: true
 				};
 				wasAlrRem = true;
-				emitter.removeWorkspace(user.object.virtuals[Object.keys(user.object.virtuals)[Number(req.params.vm)]]);
+				emitter.removeWorkspace(user.object.virtuals[Object.keys(user.object.virtuals)[Number(req.params.vm)]].id);
 				for (let vm in user.object.virtuals) {
 					if (vm == exclude_name) continue;
 					newList[vm] = user.object.virtuals[vm];
@@ -410,11 +386,11 @@ app.get("/burn/:vm", async function (req, res) {
 				return res.redirect("/settings/" + req.params.vm);
 			}
 		} else {
-			all_features[user.object.virtuals[Object.keys(user.object.virtuals)[Number(req.params.vm)]]] = {
+			all_features[user.object.virtuals[Object.keys(user.object.virtuals)[Number(req.params.vm)]].id] = {
 				ats: true
 			};
 			wasAlrRem = true;
-			emitter.removeWorkspace(user.object.virtuals[Object.keys(user.object.virtuals)[Number(req.params.vm)]]);
+			emitter.removeWorkspace(user.object.virtuals[Object.keys(user.object.virtuals)[Number(req.params.vm)]].id);
 			for (let vm in user.object.virtuals) {
 				if (vm == exclude_name) continue;
 				newList[vm] = user.object.virtuals[vm];
@@ -452,31 +428,31 @@ app.get("/shutoff/:vm", async function (req, res) {
 		target: "/",
 		msg: "This operation has been cancelled due to self-blocking in effect on your account. Please contact the system administrator."
 	});
-	let container = docker.getContainer(user.object.virtuals[Object.keys(user.object.virtuals)[Number(req.params.vm)]]);
+	let container = docker.getContainer(user.object.virtuals[Object.keys(user.object.virtuals)[Number(req.params.vm)]].id);
 	let state = await container.inspect();
-	if (all_features[user.object.virtuals[Object.keys(user.object.virtuals)[Number(req.params.vm)]]] && state.State.Running) {
-		if (all_features[user.object.virtuals[Object.keys(user.object.virtuals)[Number(req.params.vm)]]].ats) {
+	if (all_features[user.object.virtuals[Object.keys(user.object.virtuals)[Number(req.params.vm)]].id] && state.State.Running) {
+		if (all_features[user.object.virtuals[Object.keys(user.object.virtuals)[Number(req.params.vm)]].id].ats) {
 			return res.redirect("/settings/" + req.params.vm);
 		}
 	}
 	if (state.State.Running) {
-		all_features[user.object.virtuals[Object.keys(user.object.virtuals)[Number(req.params.vm)]]] = {
+		all_features[user.object.virtuals[Object.keys(user.object.virtuals)[Number(req.params.vm)]].id] = {
 			ats: true
 		};
-		emitter.removeWorkspace(user.object.virtuals[Object.keys(user.object.virtuals)[Number(req.params.vm)]]);
+		emitter.removeWorkspace(user.object.virtuals[Object.keys(user.object.virtuals)[Number(req.params.vm)]].id);
 		try {
 			await container.stop();
 		} catch {}
 	}
 	if (!state.State.Running) {
 		try {
-			let d = emitter.goToWorkspace(user.object.virtuals[Object.keys(user.object.virtuals)[Number(req.params.vm)]]);
+			let d = emitter.goToWorkspace(user.object.virtuals[Object.keys(user.object.virtuals)[Number(req.params.vm)]].id);
 			await container.start();
-			all_features[user.object.virtuals[Object.keys(user.object.virtuals)[Number(req.params.vm)]]] = {
+			all_features[user.object.virtuals[Object.keys(user.object.virtuals)[Number(req.params.vm)]].id] = {
 				shell: Buffer.from("Welcome to your DuckCloud VM!\r\n"),
 				ats: false
 			};
-			let our_vm = all_features[user.object.virtuals[Object.keys(user.object.virtuals)[Number(req.params.vm)]]];
+			let our_vm = all_features[user.object.virtuals[Object.keys(user.object.virtuals)[Number(req.params.vm)]].id];
 			our_vm.exec = await container.exec({
 				Cmd: ['/bin/bash'],
 				Tty: true,
@@ -496,7 +472,7 @@ app.get("/shutoff/:vm", async function (req, res) {
 					if (our_vm.shell.toString().includes("\x1b[H\x1b[2J")) {
 						our_vm.shell = Buffer.from(our_vm.shell.toString().split("\x1b[H\x1b[2J")[our_vm.shell.toString().split("\x1b[H\x1b[2J").length - 1]);
 					}
-					all_features[user.object.virtuals[Object.keys(user.object.virtuals)[Number(req.params.vm)]]] = our_vm;
+					all_features[user.object.virtuals[Object.keys(user.object.virtuals)[Number(req.params.vm)]].id] = our_vm;
 				} else {
 					if (a.length < require("buffer").constants.MAX_STRING_LENGTH) {
 						our_vm.shell = Buffer.concat([Buffer.from("Required cleaning of shell by Node.JS limits.\r\n"), a]);
@@ -505,23 +481,23 @@ app.get("/shutoff/:vm", async function (req, res) {
 			});
 			our_vm.started_shell.on("end", async function () {
 				our_vm.ats = true;
-				emitter.removeWorkspace(user.object.virtuals[Object.keys(user.object.virtuals)[Number(req.params.vm)]]);
+				emitter.removeWorkspace(user.object.virtuals[Object.keys(user.object.virtuals)[Number(req.params.vm)]].id);
 				try {
 					await container.stop();
 				} catch {}
-				all_features[user.object.virtuals[Object.keys(user.object.virtuals)[Number(req.params.vm)]]] = {
+				all_features[user.object.virtuals[Object.keys(user.object.virtuals)[Number(req.params.vm)]].id] = {
 					ats: true
 				};
 				our_vm = {};
 			});
-			all_features[user.object.virtuals[Object.keys(user.object.virtuals)[Number(req.params.vm)]]] = our_vm;
+			all_features[user.object.virtuals[Object.keys(user.object.virtuals)[Number(req.params.vm)]].id] = our_vm;
 		} catch {
-			all_features[user.object.virtuals[Object.keys(user.object.virtuals)[Number(req.params.vm)]]] = {
+			all_features[user.object.virtuals[Object.keys(user.object.virtuals)[Number(req.params.vm)]].id] = {
 				ats: true
 			};
 			state = await container.inspect();
 			if (state.State.Running) {
-				emitter.removeWorkspace(user.object.virtuals[Object.keys(user.object.virtuals)[Number(req.params.vm)]]);
+				emitter.removeWorkspace(user.object.virtuals[Object.keys(user.object.virtuals)[Number(req.params.vm)]].id);
 				try {
 					await container.stop();
 				} catch {}
@@ -639,6 +615,91 @@ app.post("/ren/:vm", async function (req, res) {
 	res.redirect("/settings/" + req.params.vm);
 });
 
+app.get("/whitectl/:vm", async function (req, res) {
+	if (!req.cookies.token) {
+		return res.redirect("/");
+	}
+	let user = await getUserByToken(req.cookies.token);
+	if (!user) {
+		res.clearCookie("token");
+		return res.redirect("/");
+	}
+	if (!Object.keys(user.object.virtuals)[Number(req.params.vm)]) return res.redirect("/main");
+	if (user.object.blockEnumVM) return res.status(403).render(__dirname + "/redirector.jsembeds", {
+		target: "/",
+		msg: "This operation has been cancelled due to self-blocking in effect on your account. Please contact the system administrator."
+	});
+	res.render(__dirname + "/whitectl.jsembeds", {
+		username: he.encode(user.username),
+		vm_count: req.params.vm,
+		vm_name: he.encode(Object.keys(user.object.virtuals)[Number(req.params.vm)]),
+		whitelist_list: (user.object.virtuals[Object.keys(user.object.virtuals)[Number(req.params.vm)]].whitelist || []).map(a => he.encode(a)),
+		shareUn: user.object.virtuals[Object.keys(user.object.virtuals)[Number(req.params.vm)]].clickbased ? "un" : "",
+		vm_id: user.object.virtuals[Object.keys(user.object.virtuals)[Number(req.params.vm)]].id
+	});
+});
+
+app.post("/whitectl/:vm", async function (req, res) {
+	if (!req.cookies.token) {
+		return res.redirect("/");
+	}
+	let user = await getUserByToken(req.cookies.token);
+	if (!user) {
+		res.clearCookie("token");
+		return res.redirect("/");
+	}
+	if (!Object.keys(user.object.virtuals)[Number(req.params.vm)]) return res.redirect("/main");
+	if (user.object.blockEnumVM) return res.status(403).render(__dirname + "/redirector.jsembeds", {
+		target: "/",
+		msg: "This operation has been cancelled due to self-blocking in effect on your account. Please contact the system administrator."
+	});
+	if (req.body.based == "0") {
+		delete user.object.virtuals[Object.keys(user.object.virtuals)[Number(req.params.vm)]].clickbased;
+		if (!user.object.virtuals[Object.keys(user.object.virtuals)[Number(req.params.vm)]].whitelist) user.object.virtuals[Object.keys(user.object.virtuals)[Number(req.params.vm)]].whitelist = [];
+		if (!(await db.list()).includes(req.body.username)) return res.status(500).render(__dirname + "/redirector.jsembeds", {
+			target: "/whitectl/" + req.params.vm,
+			msg: "User doesn't exist or disabled VM sharing, try again later!"
+		});
+		if ((await db.get(req.body.username)).disableSharing) return res.status(500).render(__dirname + "/redirector.jsembeds", {
+			target: "/whitectl/" + req.params.vm,
+			msg: "User doesn't exist or disabled VM sharing, try again later!"
+		});
+		if (user.object.virtuals[Object.keys(user.object.virtuals)[Number(req.params.vm)]].whitelist.includes(req.body.username)) return res.redirect("/whitectl/" + req.params.vm)
+		user.object.virtuals[Object.keys(user.object.virtuals)[Number(req.params.vm)]].whitelist.push(req.body.username);
+	} else if (req.body.based == "1") {
+		delete user.object.virtuals[Object.keys(user.object.virtuals)[Number(req.params.vm)]].whitelist;
+		if (!user.object.virtuals[Object.keys(user.object.virtuals)[Number(req.params.vm)]].clickbased) user.object.virtuals[Object.keys(user.object.virtuals)[Number(req.params.vm)]].clickbased = false;
+		user.object.virtuals[Object.keys(user.object.virtuals)[Number(req.params.vm)]].clickbased = !user.object.virtuals[Object.keys(user.object.virtuals)[Number(req.params.vm)]].clickbased;
+	} else {
+		return res.status(400).render(__dirname + "/redirector.jsembeds", {
+			target: "/settings/" + req.params.vm,
+			msg: "Sounds like a malformed request, try again later!"
+		});
+	}
+	await db.set(user.username, user.object);
+	res.redirect("/whitectl/" + req.params.vm);
+});
+
+app.get("/whitectlReset/:vm", async function (req, res) {
+	if (!req.cookies.token) {
+		return res.redirect("/");
+	}
+	let user = await getUserByToken(req.cookies.token);
+	if (!user) {
+		res.clearCookie("token");
+		return res.redirect("/");
+	}
+	if (!Object.keys(user.object.virtuals)[Number(req.params.vm)]) return res.redirect("/main");
+	if (user.object.blockEnumVM) return res.status(403).render(__dirname + "/redirector.jsembeds", {
+		target: "/",
+		msg: "This operation has been cancelled due to self-blocking in effect on your account. Please contact the system administrator."
+	});
+	delete user.object.virtuals[Object.keys(user.object.virtuals)[Number(req.params.vm)]].whitelist;
+	delete user.object.virtuals[Object.keys(user.object.virtuals)[Number(req.params.vm)]].clickbased;
+	await db.set(user.username, user.object);
+	res.redirect("/whitectl/" + req.params.vm);
+});
+
 app.post("/newInput/:vm", async function (req, res) {
 	if (!req.cookies.token) {
 		return res.redirect("/");
@@ -650,7 +711,7 @@ app.post("/newInput/:vm", async function (req, res) {
 	}
 	if (!Object.keys(user.object.virtuals)[Number(req.params.vm)]) return res.redirect("/main");
 	if (user.object.blockEnumVM) return res.send("\r\nThis operation has been cancelled due to self-blocking in effect on your account. Please contact the system administrator.");
-	let our_vm = all_features[user.object.virtuals[Object.keys(user.object.virtuals)[Number(req.params.vm)]]];
+	let our_vm = all_features[user.object.virtuals[Object.keys(user.object.virtuals)[Number(req.params.vm)]].id];
 	if (!our_vm) return res.end();
 	if (our_vm.ats) {
 		return res.send("\r\nYour virtual machine is about to stop. To use this Linux console again, restart your VM.");
@@ -669,7 +730,7 @@ app.get("/sendInput/:vm", async function (req, res) {
 	}
 	if (!Object.keys(user.object.virtuals)[Number(req.params.vm)]) return res.redirect("/main");
 	if (user.object.blockEnumVM) return res.send("\r\nThis operation has been cancelled due to self-blocking in effect on your account. Please contact the system administrator.");
-	let our_vm = all_features[user.object.virtuals[Object.keys(user.object.virtuals)[Number(req.params.vm)]]];
+	let our_vm = all_features[user.object.virtuals[Object.keys(user.object.virtuals)[Number(req.params.vm)]].id];
 	if (!our_vm) return res.end();
 	if (our_vm.ats) {
 		return res.send("\r\nYour virtual machine is about to stop. To use this Linux console again, restart your VM.");
@@ -690,7 +751,7 @@ app.get("/resize/:vm", async function (req, res) {
 	}
 	if (!Object.keys(user.object.virtuals)[Number(req.params.vm)]) return res.redirect("/main");
 	if (user.object.blockEnumVM) return res.send("\r\nThis operation has been cancelled due to self-blocking in effect on your account. Please contact the system administrator.");
-	let our_vm = all_features[user.object.virtuals[Object.keys(user.object.virtuals)[Number(req.params.vm)]]];
+	let our_vm = all_features[user.object.virtuals[Object.keys(user.object.virtuals)[Number(req.params.vm)]].id];
 	if (!our_vm) return res.end();
 	if (our_vm.ats) {
 		return res.send("\r\nYour virtual machine is about to stop. To use this Linux console again, restart your VM.");
@@ -774,7 +835,9 @@ app.post("/newVM", async function (req, res) {
 		}
 	});
 	let red = await d.inspect();
-	user.object.virtuals[req.body.vm_name] = red.Id;
+	user.object.virtuals[req.body.vm_name] = {
+		id: red.Id
+	};
 	await db.set(user.username, user.object);
 	res.redirect("/main");
 });
@@ -1426,7 +1489,7 @@ io.on("connection", async function (client) {
 			return client.disconnect();
 		}
 		if (!Object.keys(user.object.virtuals)[Number(vm)]) return client.disconnect();
-		let a = all_features[user.object.virtuals[Object.keys(user.object.virtuals)[Number(vm)]]] || {
+		let a = all_features[user.object.virtuals[Object.keys(user.object.virtuals)[Number(vm)]].id] || {
 			ats: true
 		};
 		if (user.object.blockEnumVM) {
@@ -1448,7 +1511,7 @@ io.on("connection", async function (client) {
 		} else {
 			client.emit("datad", a.shell.toString());
 		}
-		let workspace = emitter.goToWorkspace(user.object.virtuals[Object.keys(user.object.virtuals)[Number(vm)]]);
+		let workspace = emitter.goToWorkspace(user.object.virtuals[Object.keys(user.object.virtuals)[Number(vm)]].id);
 		workspace.on("data", async function (e) {
 			if (disconn) return;
 			user = await getUserByToken(cookie.parse(client.handshake.headers.cookie).token);
@@ -1523,23 +1586,48 @@ io.on("connection", async function (client) {
 		} else {
 			return client.disconnect();
 		}
-		if (!Object.keys(user.object.virtuals)[Number(vm)]) return client.disconnect();
+		let id = "";
+		if (typeof vm === "number") {
+			if (!Object.keys(user.object.virtuals)[Number(vm)]) return client.disconnect();
+			id = user.object.virtuals[Object.keys(user.object.virtuals)[Number(vm)]].id
+		}
+		if (typeof vm === "string") {
+			let base = await db.list();
+			for (let user of base) {
+				let userbase_data = await db.get(user);
+				for (let virt in userbase_data.virtuals) {
+					if (userbase_data.virtuals[virt].id == vm) {
+						if (userbase_data.virtuals[virt].clickbased) {
+							id = vm;
+						} else if (userbase_data.virtuals[virt].whitelist) {
+							if (userbase_data.virtuals[virt].whitelist.includes(user.username)) {
+								id = vm;
+							}
+						}
+					}
+				}
+			}
+		}
+		if (!id) return client.disconnect();
 		if (typeof port !== "number") return client.disconnect();
 		if (port > 65536) return client.disconnect();
 		if (port < 0) return client.disconnect();
 		// TCP Socket handling
 		let connection;
 		try {
-			let container = await docker.getContainer(user.object.virtuals[Object.keys(user.object.virtuals)[Number(vm)]]);
+			let container = await docker.getContainer(id);
         	let inspected = await container.inspect();
-			if (!inspected.State.Running) throw new Error("cancel the connection because it's shut off");
+			if (!inspected.State.Running) {
+				client.emit("datad", "Error creating any sort of connection. The VM isn't running: Start the VM and the TCP service to continue. Also, is the server is started? Is there a firewall blocking the request?");
+				return client.disconnect();
+			}
 			connection = net.createConnection(port, inspected.NetworkSettings.IPAddress);
 		} catch {
-			client.emit("datad", "Error creating any sort of connection. Ensure the VM is turned on, the server is started and there's no firewall blocking the request.");
+			client.emit("datad", "Error creating any sort of connection. Is the server is started? Is there a firewall blocking the request?");
 			return client.disconnect();
 		}
 		connection.on("error", function() {
-			client.emit("datad", "Error while using connection. Ensure the VM is turned on, the server is started and there's no firewall blocking the request.");
+			client.emit("datad", "Error while using connection. Is the server is started? Is there a firewall blocking the request?");
 			return client.disconnect();
 		});
 		connection.on("close", function() {
