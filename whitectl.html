@@ -27,7 +27,9 @@
 		<br>
 		You can invite ∞ more users.
 		<br>
-		<nodejs-embed>whitelist_list.join("<br>")</nodejs-embed>
+		<nodejs-embed>
+			whitelist_list.map(a => !allUsers.includes(a) ? `<strike>${a}</strike> (that user does no longer exist - change your set${""}tings asap)` : a).join("<br>")
+		</nodejs-embed>
 		<br>
 		<form action="/whitectl/<nodejs-embed>vm_count</nodejs-embed>" method="post">
 			<input name="based" value="0" hidden type="hidden"></input>

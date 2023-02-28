@@ -134,6 +134,11 @@
         <br>
         Adds an user to the whitelist or toggles click-based access control.
         <hr>
+        <h3>GET <a href="/whitectlReset/0">/whitectlReset/:vmNumber</a></h3>
+        <em>This operation requires proper logon. Users will get redirected to / if they have an incorrect token or didn't log in yet.</em>
+        <br>
+        Removes all users from the whitelist, blocking all TCP access to the VM (you can still access it tho!)
+        <hr>
         <h3>POST /newInput/:vmNumber</h3>
         <em>This operation requires proper logon. Users will get redirected to / if they have an incorrect token or didn't log in yet.</em>
         <br>
@@ -382,6 +387,24 @@
         <br>
         TCP disconnected event. (client)
         <hr>
+        <h2>Error codes</h2>
+        <hr>
+        e1 - Access is denied (TCP)
+        <br>
+        e2 - VM about to shut down
+        <br>
+        e3 - Something happened?
+        <br>
+        e4 - Connection reset, port unreachable, and whatever makes Node.JS error out when using TCP connections. (TCP)
+        <br>
+        e5 - There is self-blocking applied! Take it off.
+        <br>
+        e6 - You should <code>clear</code>.
+        <br>
+        e7 - Unreachable error (cleaning required by Node.JS internals)
+        <br>
+        These mostly apply to Socket.IO APIs.
+        <br>
         <b class="likeComment">// The API documentation stops HERE.</b>
 	</body>
 </html>

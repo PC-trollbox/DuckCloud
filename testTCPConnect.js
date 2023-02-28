@@ -5,24 +5,16 @@ const vmId = -1;
 const token = "";
 const port = -1;
 
-if (duckcloud_api == "") {
-	return console.error("[DuckCloud API URL missing] Configure testTCPConnect.js, please. If you don't know how - contact your DuckCloud system admin.");
-}
+if (duckcloud_api == "") return console.error("[DuckCloud API URL missing] Configure testTCPConnect.js, please. If you don't know how - contact your DuckCloud system admin.");
 console.log("will be using API", duckcloud_api, ", to change please configure testTCPConnect.js");
-if (vmId == -1) {
-	return console.error("[DuckCloud VM index missing] Configure testTCPConnect.js, please. If you don't know how - contact your DuckCloud system admin.");
-}
+if (vmId == -1) return console.error("[DuckCloud VM index missing] Configure testTCPConnect.js, please. If you don't know how - contact your DuckCloud system admin.");
+if (typeof vmId !== "string" && typeof vmId !== "number") return console.error("[DuckCloud VM index invalid] Configure testTCPConnect.js, please. The index must be a number. If you don't know how to configure - contact your DuckCloud system admin.");
+if (typeof vmId === "string") console.warn("[DuckCloud VM index is a string] Watch out for reverse shell attacks! They might occur if you're using a public container - please be aware of that.");
 console.log("will be using VM index", vmId, ", to change please configure testTCPConnect.js");
-if (token == "") {
-	return console.error("[DuckCloud API token missing] Configure testTCPConnect.js, please. If you don't know how - contact your DuckCloud system admin.");
-}
+if (token == "") return console.error("[DuckCloud API token missing] Configure testTCPConnect.js, please. If you don't know how - contact your DuckCloud system admin.");
 console.log("will be using a token", token.split("", 5).join("") + "*".repeat(token.length - 5), ", to change please configure testTCPConnect.js");
-if (port == -1) {
-	return console.error("[DuckCloud VM port missing] Configure testTCPConnect.js, please. If you don't know how - contact your DuckCloud system admin.");
-}
-if (port < 0 || port > 65535) {
-	return console.error("[DuckCloud VM port invalid] Configure testTCPConnect.js, please. The port must be in 0-65535 range. If you don't know how to configure - contact your DuckCloud system admin.");
-}
+if (port == -1) return console.error("[DuckCloud VM port missing] Configure testTCPConnect.js, please. If you don't know how - contact your DuckCloud system admin.");
+if (port < 0 || port > 65535) return console.error("[DuckCloud VM port invalid] Configure testTCPConnect.js, please. The port must be in 0-65535 range. If you don't know how to configure - contact your DuckCloud system admin.");
 console.log("will be connecting to port", port, ", to change please configure testTCPConnect.js");
 
 let srv = net.createServer(function(socket) {
