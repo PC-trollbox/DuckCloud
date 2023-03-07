@@ -52,6 +52,14 @@
 			<button>Toggle sharing</button>
 		</form>
 		<hr>
+		<b>Trusted Technician</b> - Start a technician session without giving away your password.
+		<br>
+		If you met a scam technician, please contact the Server Administrator! If you think that you got malware, you can restore your VMs from a backup (if you did backups) or start over (if you didn't do backups, which is bad) after resetting technician sessions with the link below.
+		<form action="/trustedTechCreate" method="POST">
+			<button>Allow trusted technician to access account</button>
+		</form>
+		<a href="/trustedTechReset" onclick="return confirm('Ensure the technician has done the work, then click OK.');">Reset technician sessions</a>
+		<hr>
 		<b>Self-blocking</b> - Restricts features on your DuckCloud ID if you get seriously hacked. The blocking can be only taken off by contacting the system administrator.
 		<br>
 		Blocked features:

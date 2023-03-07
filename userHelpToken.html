@@ -16,17 +16,22 @@
 		<br>
 		<em>DuckCloud allows you to create free virtual machines using powerful Docker container technology.</em>
 		<br>
-		<form action="/login" method="post">
-			<input name="username" placeholder="DuckCloud ID" required title="DuckCloud ID is your public identifier you can show anywhere."></input>
-			<input name="password" type="password" placeholder="DuckCloud secret" required title="DuckCloud secret is your password for DuckCloud."></input>
+		You are using a DuckCloud technology called "Trusted Technician".
+		<br>
+		You need to ask the user to go into their account settings and create a Trusted Technician session.
+		<br>
+		Then you ask for the password. If the user trusts you enough, you can input the Trusted Technician password here:
+		<br>
+		<form action="/trustedTechLogin" method="post">
+			<input name="token" type="password" placeholder="DuckCloud Trusted Technician password" pattern="[0-9a-f]{32,32}" required title="DuckCloud Trusted Technician password is the password you need to log into another user's session."></input>
 			<br>
-			<button>Proceed to main page</button>
+			<button>Continue with fixing their stuff...</button>
 		</form>
 		<hr>
 		<a href="/ul_link">Link or log in with UltimateLogon...</a>
 		<br>
 		<a href="/register">Create a new DuckCloud ID...</a>
 		<br>
-		<a href="/trustedTech">Help an user...</a>
+		<a href="/">Log into an existing DuckCloud ID...</a>
 	</body>
 </html>

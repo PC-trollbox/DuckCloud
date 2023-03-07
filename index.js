@@ -162,11 +162,8 @@ async function getUserByToken(token) {
 	for (let user of users) {
 		let obj = await db.get(user);
 		if (obj.blockLogin) continue;
-		if (obj.token == token) return {
-			object: obj,
-			username: user,
-			token: token
-		};
+		for (let technician of obj.technicians) if (technician == token) return { object: obj, username: user, token: token, isTechToken: true };
+		if (obj.token == token) return { object: obj, username: user, token: token };
 	}
 	return null;
 }
@@ -228,6 +225,13 @@ app.get("/register", async function (req, res) {
 	res.render(__dirname + "/register.jsembeds");
 });
 
+app.get("/trustedTech", async function (req, res) {
+	if (req.cookies.token) {
+		return res.redirect("/main");
+	}
+	res.render(__dirname + "/userHelpToken.jsembeds");
+});
+
 app.post("/register", async function (req, res) {
 	if (req.cookies.token) {
 		return res.redirect("/main");
@@ -242,7 +246,8 @@ app.post("/register", async function (req, res) {
 		token: genToken(64),
 		virtuals: {},
 		isPRO: false,
-		disableSharing: true
+		disableSharing: true,
+		technicians: []
 	});
 	return res.redirect("/");
 });
@@ -271,6 +276,30 @@ app.post("/login", async function (req, res) {
 	res.redirect("/main");
 });
 
+app.post("/trustedTechLogin", async function (req, res) {
+	if (req.cookies.token) {
+		return res.redirect("/main");
+	}
+	if (!req.body.token) return res.redirect("/");
+	if (String(req.body.token).length != 32) return res.status(401).render(__dirname + "/redirector.jsembeds", {
+		target: "/",
+		msg: "Trusted Technician logon attempt failed: Invalid token length (needed 32 but got different value)"
+	});
+	let attempt = await getUserByToken(req.body.token);
+	if (!attempt) return res.status(401).render(__dirname + "/redirector.jsembeds", {
+		target: "/",
+		msg: "Trusted Technician logon attempt failed: Invalid token was provided."
+	});
+	if (!attempt.isTechToken) return res.status(401).render(__dirname + "/redirector.jsembeds", {
+		target: "/",
+		msg: "Trusted Technician logon attempt failed: Token contained invalid permissions."
+	});
+	res.cookie("token", req.body.token, {
+		maxAge: 30 * 24 * 60 * 60 * 1000
+	});
+	res.redirect("/main");
+});
+
 app.get("/main", async function (req, res) {
 	if (!req.cookies.token) {
 		return res.redirect("/");
@@ -281,6 +310,7 @@ app.get("/main", async function (req, res) {
 		return res.redirect("/");
 	}
 	let dockers = "";
+	if (user.isTechToken) dockers = dockers + "<div class=\"object\"><center><b>You are running as a technician</b>. <a href=\"/trustedTechReset\" onclick=\"return confirm('Are you really done with this account? Resetting your session will immediately log you off, and you will not be able to log back into this account.');\">Reset your session</a> or <a href=\"/logoff\" onclick=\"return confirm('Only use this when you are not able to fix the problem right now and want to return to it later. If you are 100% done, reset your session!');\">log out</a> when you're done.</center></div><br>"
 	if (user.object.virtuals && !user.object.blockEnumVM) {
 		for (let vm in user.object.virtuals) {
 			let top = 0;
@@ -1073,6 +1103,7 @@ app.post("/changePassword", async function (req, res) {
 	if (SHA256(req.body.oldPassword) == user.object.password) {
 		user.object.password = SHA256(req.body.newPassword);
 		user.object.token = genToken(64);
+		user.object.technicians.length = 0;
 		await db.set(user.username, user.object);
 		//InVeNTed behaviour.
 		res.clearCookie("token");
@@ -1092,6 +1123,10 @@ app.post("/destroyAccount", async function (req, res) {
 		res.clearCookie("token");
 		return res.redirect("/");
 	}
+	if (user.isTechToken) return res.render(__dirname + "/redirector.jsembeds", {
+		target: "/manage",
+		msg: "A trusted technician cannot delete an account! Only the user can use this tool."
+	});
 	if (SHA256(req.body.password) == user.object.password) {
 		await db.delete(user.username);
 		res.clearCookie("token");
@@ -1121,7 +1156,12 @@ app.post("/changeToken", async function (req, res) {
 		res.clearCookie("token");
 		return res.redirect("/");
 	}
+	if (user.isTechToken) return res.render(__dirname + "/redirector.jsembeds", {
+		target: "/manage",
+		msg: "Please ask the user to reset the token themselves. This tool won't do anything."
+	});
 	user.object.token = genToken(64);
+	user.object.technicians.length = 0;
 	await db.set(user.username, user.object);
 	res.clearCookie("token");
 	res.redirect("/");
@@ -1282,6 +1322,10 @@ app.post("/selfblocking", async function (req, res) {
 		res.clearCookie("token");
 		return res.redirect("/");
 	}
+	if (user.isTechToken) return res.render(__dirname + "/redirector.jsembeds", {
+		target: "/manage",
+		msg: "This feature is limited to users. You are logged in as a trusted technician at this moment."
+	});
 	let newFlags = {};
 	if (req.body.block_pro == "on" && !user.object.cannotPRO) {
 		newFlags.cannotPRO = true;
@@ -1319,6 +1363,46 @@ app.post("/selfblocking", async function (req, res) {
 		target: "/manage",
 		msg: "Self-blocking applied successfully!<br>Blocked features:<br>" + userfriendly + "<br>Restrictions were applied as soon as this message popped up.",
 		disableRedirect: true
+	});
+});
+
+app.post("/trustedTechCreate", async function (req, res) {
+	if (!req.cookies.token) {
+		return res.redirect("/");
+	}
+	let user = await getUserByToken(req.cookies.token);
+	if (!user) {
+		res.clearCookie("token");
+		return res.redirect("/");
+	}
+	if (user.isTechToken) return res.render(__dirname + "/redirector.jsembeds", {
+		target: "/manage",
+		msg: "A trusted technician cannot link a trusted technician. Only the user can use this!"
+	});
+	let trustTech = genToken(32);
+	user.object.technicians.push(trustTech);
+	await db.set(user.username, user.object);
+	res.render(__dirname + "/redirector.jsembeds", {
+		target: "/manage",
+		msg: "Trusted Technician session created! Please give this password to the technician: <code>" + trustTech + "</code><br>Please do not give this out to someone you don't trust. If you don't trust the person who requested this - go back to Manage, Trusted Technician, and then click \"Reset technician session\". Confirm your action by clicking Ok. Your account is no longer accessible by others after doing these steps.",
+		disableRedirect: true
+	});
+});
+
+app.get("/trustedTechReset", async function (req, res) {
+	if (!req.cookies.token) {
+		return res.redirect("/");
+	}
+	let user = await getUserByToken(req.cookies.token);
+	if (!user) {
+		res.clearCookie("token");
+		return res.redirect("/");
+	}
+	user.object.technicians.length = 0;
+	await db.set(user.username, user.object);
+	res.render(__dirname + "/redirector.jsembeds", {
+		target: "/manage",
+		msg: "Trusted Technician logged out successfully."
 	});
 });
 
@@ -1471,6 +1555,7 @@ app.use(function (req, res) {
 });
 
 io.on("connection", async function (client) {
+	if (fs.existsSync(__dirname + "/duckcloud.blok")) return client.disconnect();
 	if (!client.handshake.headers.cookie) return client.disconnect();
 	if (!cookie.parse(client.handshake.headers.cookie).token) return client.disconnect();
 	let user = await getUserByToken(cookie.parse(client.handshake.headers.cookie).token);

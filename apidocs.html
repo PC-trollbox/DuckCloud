@@ -20,7 +20,7 @@
         Your application logs in with a <code>Cookie</code> header - with a <code>token</code> cookie. This is applicable for both HTTP and Socket.IO APIs. The value for <code>Cookie</code> header if the user's token is abcdlol:
         <pre>token=abcdlol</pre>
         <hr>
-        <b>Using Node.JS?</b> If you are using POST /login, you can get transparently redirected by <code>fetch</code> and not get logged in. You need to use a package which supports cookies or just don't redirect and get the cookie from headers. Good luck on your app :)
+        <b>Transparent redirects</b> If you are using POST /login, you can get transparently redirected by <code>fetch</code> and not get logged in. You need to use something that supports cookies or just disable redirects and get the cookie from headers. Good luck on your app :)
         <hr>
         <h2>HTTP API</h2>
         This is the main part of the API.
@@ -30,6 +30,9 @@
         <hr>
         <h3>GET <a href="/register">/register</a></h3>
         Redirects the user to /main if they are logged in, otherwise prompts to register an account.
+        <hr>
+        <h3>GET <a href="/trustedTech">/trustedTech</a></h3>
+        Redirects the user to /main if they are logged in, otherwise prompts to enter a Trusted Technician token.
         <hr>
         <h3>POST /register</h3>
         Params: encode in JSON or URLencoded
@@ -49,16 +52,23 @@
         <br>
         Puts a <code>token</code> cookie if the user has successfully logged in, or redirects the user to /main if they are logged in.
         <hr>
+        <h3>POST /trustedTechLogin</h3>
+        Params: encode in JSON or URLencoded
+        <br>
+        <code>token</code> - DuckCloud Trusted Technician password
+        <br>
+        Log in as a trusted technician. Normal tokens WILL NOT be able to proceed.
+        <hr>
         <h3>GET <a href="/main">/main</a></h3>
         <em>This operation requires proper logon. Users will get redirected to / if they have an incorrect token or didn't log in yet.</em>
         <br>
         Shows a GUI with all the VMs. Your application can still request a computer-readable list without worrying about parsing HTML.
         <hr>
         <h3>GET <a href="/listContainer">/listContainer</a></h3>
-        <em>This operation requires proper logon. Users will get redirected to / if they have an incorrect token or didn't log in yet.</em>
         <br>
         Sends computer-readable list of VMs. For example:
         <pre>[
+        <em>This operation requires proper logon. Users will get redirected to / if they have an incorrect token or didn't log in yet.</em>
     {
         "vmname": "MyVM",
         "vmname_encoded": "MyVM",
@@ -244,6 +254,8 @@
         <h3>POST /destroyAccount</h3>
         <em>This operation requires proper logon. Users will get redirected to / if they have an incorrect token or didn't log in yet.</em>
         <br>
+        <em>This operation requires the user to be logged without a Technician Token (using the normal token).</em>
+        <br>
         Params: encode in JSON or URLencoded
         <br>
         <code>password</code> - current DuckCloud secret for confirmation of identity.
@@ -252,6 +264,8 @@
         <hr>
         <h3>POST /changeToken</h3>
         <em>This operation requires proper logon. Users will get redirected to / if they have an incorrect token or didn't log in yet.</em>
+        <br>
+        <em>This operation requires the user to be logged without a Technician Token (using the normal token).</em>
         <br>
         The user's token will be changed without affecting the password. Redirects to / on success.
         <hr>
@@ -292,6 +306,10 @@
         <b class="likeComment">// DuckCloud PRO tokens end HERE. Bots can use the endpoints declared here.</b>
         <hr>
         <h3>POST /selfblock</h3>
+        <em>This operation requires proper logon. Users will get redirected to / if they have an incorrect token or didn't log in yet.</em>
+        <br>
+        <em>This operation requires the user to be logged without a Technician Token (using the normal token).</em>
+        <br>
         Params: encode in JSON or URLencoded
         <br>
         <code>block_pro</code> - set to <code>on</code> to block using PRO codes and the PRO version. Multiple VMs and PRO-RAM VMs will be kept, but you cannot create new ones.
@@ -305,6 +323,16 @@
         Strip down some of core DuckCloud mechanics in case you get hacked. The best way to get your account secured is still creating a new password, but if you are in a situation you can't - DuckCloud selfblocking's got your back.
         <br>
         Your application still doesn't need to do this do the user, but if you wanna annoy them - feel free to use this feature.
+        <hr>
+        <h3>POST /trustedTechCreate</h3>
+        <em>This operation requires proper logon. Users will get redirected to / if they have an incorrect token or didn't log in yet.</em>
+        <br>
+        Creates a Trusted Technician session token and replies with the token on a redirect page.
+        <hr>
+        <h3>GET <a href="/trustedTechReset">/trustedTechReset</a></h3>
+        <em>This operation requires proper logon. Users will get redirected to / if they have an incorrect token or didn't log in yet.</em>
+        <br>
+        Logs out every Trusted Technician the user has allowed.
         <hr>
         <h3>GET <a href="/xterm/lib/xterm.js">/xterm/lib/xterm.js</a></h3>
         The source code for xterm - the JavaScript part.
