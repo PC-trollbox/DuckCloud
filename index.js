@@ -1085,7 +1085,8 @@ app.get("/manage", async function (req, res) {
 		pfm_cmtend_only_nonpro: (user.object.isPRO) ? "-->" : "",
 		blocked_pro: (user.object.cannotPRO) ? "disabled checked" : "",
 		blocked_enum: (user.object.blockEnumVM) ? "disabled checked" : "",
-		blocked_ultimatelogon: (user.object.block_ul) ? "disabled checked" : ""
+		blocked_ultimatelogon: (user.object.block_ul) ? "disabled checked" : "",
+		certifiedDuckCloudTech: (user.object.isCertifiedTechnician) ? "" : "n't"
 	});
 });
 
@@ -1403,6 +1404,27 @@ app.get("/trustedTechReset", async function (req, res) {
 	res.render(__dirname + "/redirector.jsembeds", {
 		target: "/manage",
 		msg: "Trusted Technician logged out successfully."
+	});
+});
+
+app.get("/trustedTechQuery", async function (req, res) {
+	if (!req.cookies.token) {
+		return res.redirect("/");
+	}
+	let user = await getUserByToken(req.cookies.token);
+	if (!user) {
+		res.clearCookie("token");
+		return res.redirect("/");
+	}
+	let users = await db.list();
+	for (let user of users) if ((await db.get(user)).isCertifiedTechnician && user == req.query.username) return res.render(__dirname + "/redirector.jsembeds", {
+		target: "/manage",
+		msg: "<code>" + req.query.username + "</code> is a valid DuckCloud Certified Technician!",
+		disableRedirect: true
+	});
+	res.render(__dirname + "/redirector.jsembeds", {
+		target: "/manage",
+		msg: "<b><code>" + req.query.username + "</code> is not a valid DuckCloud Certified Technician</b>"
 	});
 });
 
