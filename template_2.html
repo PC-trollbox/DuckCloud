@@ -42,7 +42,7 @@
 				socket.emit("datad", e.key);
 			});
 			copypaste.oninput = function() {
-				socket.emit("datad", (copypaste.value.replace("\n","\r")));
+				socket.emit("datad", (copypaste.value.replaceAll("\n","\r")));
 				copypaste.value = "";
 			}
 			term.textarea?.setAttribute("enterkeyhint", "send");

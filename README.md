@@ -9,6 +9,16 @@ Add these contents to db.json.
 ```
 Save this and then run.
 
+## Selfhosting
+
+Please build suspiral:
+1. cd to `suspiral`
+2. docker build . -t duckcloud/suspiral
+
+[err] Experiencing no pages (just the file name)? Make sure all the .jsembeds files are symlinks!
+
+[wrn] Terminal input on Windows might not work. If you need that for testing, please use Linux VMs (actual VMs!) or WSL.
+
 ## Administration
 
 ### PRO flags

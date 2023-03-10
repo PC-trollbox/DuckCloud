@@ -847,7 +847,8 @@ app.post("/newVM", async function (req, res) {
 
 	if (!req.body.vm_name) return res.redirect("/newVM");
 	if (Object.keys(user.object.virtuals).includes(req.body.vm_name)) return res.redirect("/newVM");
-	let distribs = ["debian", "archlinux", "duckcloud/suspiral"];
+	let distribs = ["debian", "archlinux", "duckcloud/suspiral", "centos"];
+	let managedInit = ["duckcloud/suspiral"];
 	if (!distribs.includes(req.body.distro)) return res.status(400).end();
 
 	let d = await docker.createContainer({
@@ -856,7 +857,7 @@ app.post("/newVM", async function (req, res) {
 		AttachStdout: true,
 		AttachStderr: true,
 		Tty: true,
-		Cmd: req.body.distro === "duckcloud/suspiral" ? ['sh', '/etc/init_exec.sh'] : ['/bin/bash'],
+		Cmd: managedInit.includes(req.body.distro) ? ['sh', '/etc/init_exec.sh'] : ['/bin/bash'],
 		OpenStdin: false,
 		StdinOnce: false,
 		NetworkDisabled: ((req.body.shouldHaveNetworking || "off") == "off"),
