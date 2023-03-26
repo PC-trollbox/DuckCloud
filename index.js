@@ -11,6 +11,7 @@ const docker = new dockerode();
 const app = express();
 const http = require("http").Server(app);
 const net = require("net");
+const admin_email = "admin@example.com"; //<- Replace this with your actual email address
 const io = require("socket.io")(http, {
 	allowEIO3: true,
 	cookie: true
@@ -265,7 +266,8 @@ app.post("/login", async function (req, res) {
 	if (SHA256(req.body.password) == user.password) {
 		if (user.blockLogin) return res.status(403).render(__dirname + "/redirector.jsembeds", {
 			target: "/",
-			msg: "This operation has been cancelled due to self-blocking in effect on your account (e5). Please contact the system administrator."
+			msg: "This operation has been cancelled due to self-blocking in effect on your account (e5). Please contact the system administrator.<br>Help information: To unblock your account, contact the System Administrator (can be found <a href=\"/contact\">here</a>) and tell them your username and your recovery key. Tell them to unblock logon (and possibly other functions). If you don't have a recovery key, attempt to remember any information on your account that you have stored in VMs. Files must be in home directories (and your nobody user doesn't count as it has / as home).",
+			disableRedirect: true
 		});
 		res.cookie("token", user.token, {
 			maxAge: 30 * 24 * 60 * 60 * 1000
@@ -1570,6 +1572,12 @@ app.get("/corsReset", async function (req, res) {
 	res.render(__dirname + "/redirector.jsembeds", {
 		target: "/cors",
 		msg: "Network services can no longer use DuckCloud APIs."
+	});
+});
+
+app.get("/contact", function(req, res) {
+	res.render(__dirname + "/contactInfo.jsembeds", {
+		adminemail: admin_email
 	});
 });
 
