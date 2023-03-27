@@ -149,11 +149,7 @@ function SHA256(input) {
 //Token generator
 function genToken(long = 16) {
 	if (long % 2 != 0) throw new Error("invalid token length");
-	let endToken = "";
-	while (endToken.length < long) {
-		endToken = endToken + crypto.randomBytes(1).toString("hex");
-	}
-	return endToken.split("", long).join("");
+	return crypto.randomBytes(long / 2).toString("hex").split("", long).join("");
 }
 
 //Get user by token
@@ -1089,7 +1085,8 @@ app.get("/manage", async function (req, res) {
 		blocked_pro: (user.object.cannotPRO) ? "disabled checked" : "",
 		blocked_enum: (user.object.blockEnumVM) ? "disabled checked" : "",
 		blocked_ultimatelogon: (user.object.block_ul) ? "disabled checked" : "",
-		certifiedDuckCloudTech: (user.object.isCertifiedTechnician) ? "" : "n't"
+		certifiedDuckCloudTech: (user.object.isCertifiedTechnician) ? "" : "n't",
+		isRecoveryKeyStale: (user.object.recoveryKey) ? "No" : "Yes"
 	});
 });
 
@@ -1366,6 +1363,29 @@ app.post("/selfblocking", async function (req, res) {
 	res.render(__dirname + "/redirector.jsembeds", {
 		target: "/manage",
 		msg: "Self-blocking applied successfully!<br>Blocked features:<br>" + userfriendly + "<br>Restrictions were applied as soon as this message popped up.",
+		disableRedirect: true
+	});
+});
+
+app.post("/recoveryKey", async function (req, res) {
+	if (!req.cookies.token) {
+		return res.redirect("/");
+	}
+	let user = await getUserByToken(req.cookies.token);
+	if (!user) {
+		res.clearCookie("token");
+		return res.redirect("/");
+	}
+	if (user.isTechToken) return res.render(__dirname + "/redirector.jsembeds", {
+		target: "/manage",
+		msg: "This feature is limited to users. You are logged in as a trusted technician at this moment."
+	});
+	let recoveryKey = genToken(512);
+	user.object.recoveryKey = SHA256(recoveryKey);
+	await db.set(user.username, user.object);
+	res.render(__dirname + "/redirector.jsembeds", {
+		target: "/manage",
+		msg: "Your new recovery key is: <label class=\"hideWithoutHover\" onclick=\"this.classList.contains('hideWithoutHover')?this.classList.remove('hideWithoutHover'):this.classList.add('hideWithoutHover')\"><code>" + he.encode(recoveryKey) + "</code></label><br>Please: store the key in a physical location or a password manager; do not give the key to anyone except the email you see in <a href=\"/contact\" target=\"_blank\" rel=\"noopener noreferrer\">contact us page</a> (this opens in a new tab); rotate the key after a successful account recovery (it IS required!); do not use the recovery key when you don't need it; do not use the recovery key as a password to another service.",
 		disableRedirect: true
 	});
 });
