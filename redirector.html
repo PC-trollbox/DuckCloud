@@ -22,11 +22,11 @@
             let target = "<nodejs-embed>target</nodejs-embed>";
             let redirectDisabled = "<nodejs-embed>disableRedirect</nodejs-embed>";
             if (redirectDisabled != "true") {
-                document.getElementById("isRedirDisabled").innerHTML = "<hr> <em>You will be redirected in 1 second.</em>";
+                document.getElementById("isRedirDisabled").innerHTML = "<hr> <em>You will be redirected in 5 seconds.</em>";
                 setTimeout(function() {
                     document.getElementById("isRedirDisabled").innerHTML = "";
                     location.href = target;
-                }, 1000);
+                }, 5000);
             } else {
                 document.getElementById("isRedirDisabled").innerHTML = "<hr> <em>Redirecting was disabled.</em>";
             }

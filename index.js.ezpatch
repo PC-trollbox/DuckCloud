@@ -1,6 +1,6 @@
 #skiplines 13
 #removeline
 const admin_email = "pcsoft@pcprojects.tk";
-#skiplines 876
+#skiplines 822
 #removeline
 	if (!req.query.deviceID) res.redirect("https://ultimatelogon.pcprojects.tk/oauth?requestToken=a&followLink=" + encodeURIComponent("https://" + req.hostname + "/ul_link") + "&companyName=DuckCloud");

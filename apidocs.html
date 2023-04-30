@@ -324,6 +324,13 @@
         <br>
         Your application still doesn't need to do this do the user, but if you wanna annoy them - feel free to use this feature.
         <hr>
+        <h3>POST /recoveryKey</h3>
+        <em>This operation requires proper logon. Users will get redirected to / if they have an incorrect token or didn't log in yet.</em>
+        <br>
+        <em>This operation requires the user to be logged without a Technician Token (using the normal token).</em>
+        <br>
+        Creates a recovery key for the user and replies with the key on a redirect page.
+        <hr>
         <h3>POST /trustedTechCreate</h3>
         <em>This operation requires proper logon. Users will get redirected to / if they have an incorrect token or didn't log in yet.</em>
         <br>
@@ -333,6 +340,15 @@
         <em>This operation requires proper logon. Users will get redirected to / if they have an incorrect token or didn't log in yet.</em>
         <br>
         Logs out every Trusted Technician the user has allowed.
+        <hr>
+        <h3>GET <a href="/trustedTechQuery">/trustedTechQuery</a></h3>
+        <em>This operation requires proper logon. Users will get redirected to / if they have an incorrect token or didn't log in yet.</em>
+        <br>
+        Params: send as HTTP query
+        <br>
+        <code>username</code> - The username to query.
+        <br>
+        Checks if a user in query parameters is a Trusted Technician.
         <hr>
         <h3>GET <a href="/xterm/lib/xterm.js">/xterm/lib/xterm.js</a></h3>
         The source code for xterm - the JavaScript part.
@@ -359,6 +375,8 @@
         <h3>POST /cors</h3>
         <em>This operation requires proper logon. Users will get redirected to /cors if they have an incorrect token or didn't log in yet.</em>
         <br>
+        Params: encode in JSON or URLencoded
+        <br>
         <code>botpuzzl_solvd</code> - The code result of /botpuzzl.
         <br>
         <code>domain</code> - The domain to add.
@@ -368,6 +386,10 @@
         <h3>GET <a href="/corsReset">/corsReset</a></h3>
         <br>
         Removes all data from the allowed list for this IP.
+        <hr>
+        <h3>GET <a href="/contact">/contact</a></h3>
+        <br>
+        Returns the contact information.
         <hr>
         <h2>Socket.IO API</h2>
         You should use THIS for I/O on the user's VMs, not the HTTP calls - as HTTP can be easily damaged and it's not that fast as you think.

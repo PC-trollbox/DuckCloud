@@ -205,9 +205,7 @@ app.use(function (req, res, next) {
 
 //And... yep. goodluck! :)
 app.get('/', async (req, res) => {
-	if (req.cookies.token) {
-		return res.redirect("/main");
-	}
+	if (req.cookies.token) return res.redirect("/main");
 	res.render(__dirname + "/index.jsembeds");
 });
 
@@ -216,23 +214,17 @@ app.get('/regular.css', async (req, res) => {
 });
 
 app.get("/register", async function (req, res) {
-	if (req.cookies.token) {
-		return res.redirect("/main");
-	}
+	if (req.cookies.token) return res.redirect("/main");
 	res.render(__dirname + "/register.jsembeds");
 });
 
 app.get("/trustedTech", async function (req, res) {
-	if (req.cookies.token) {
-		return res.redirect("/main");
-	}
+	if (req.cookies.token) return res.redirect("/main");
 	res.render(__dirname + "/userHelpToken.jsembeds");
 });
 
 app.post("/register", async function (req, res) {
-	if (req.cookies.token) {
-		return res.redirect("/main");
-	}
+	if (req.cookies.token) return res.redirect("/main");
 	if (!req.body.username) return res.redirect("/register");
 	if (!req.body.password) return res.redirect("/register");
 	if ((await db.list()).includes(req.body.username)) {
@@ -250,9 +242,7 @@ app.post("/register", async function (req, res) {
 });
 
 app.post("/login", async function (req, res) {
-	if (req.cookies.token) {
-		return res.redirect("/main");
-	}
+	if (req.cookies.token) return res.redirect("/main");
 	if (!req.body.username) return res.redirect("/");
 	if (!req.body.password) return res.redirect("/");
 	if (!((await db.list()).includes(req.body.username))) {
@@ -275,9 +265,7 @@ app.post("/login", async function (req, res) {
 });
 
 app.post("/trustedTechLogin", async function (req, res) {
-	if (req.cookies.token) {
-		return res.redirect("/main");
-	}
+	if (req.cookies.token) return res.redirect("/main");
 	if (!req.body.token) return res.redirect("/");
 	if (String(req.body.token).length != 32) return res.status(401).render(__dirname + "/redirector.jsembeds", {
 		target: "/",
@@ -299,9 +287,7 @@ app.post("/trustedTechLogin", async function (req, res) {
 });
 
 app.get("/main", async function (req, res) {
-	if (!req.cookies.token) {
-		return res.redirect("/");
-	}
+	if (!req.cookies.token) return res.redirect("/");
 	let user = await getUserByToken(req.cookies.token);
 	if (!user) {
 		res.clearCookie("token");
@@ -325,9 +311,7 @@ app.get("/main", async function (req, res) {
 	});
 });
 app.get("/listContainer", async function (req, res) {
-	if (!req.cookies.token) {
-		return res.redirect("/");
-	}
+	if (!req.cookies.token) return res.redirect("/");
 	let user = await getUserByToken(req.cookies.token);
 	if (!user) {
 		res.clearCookie("token");
@@ -351,9 +335,7 @@ app.get("/listContainer", async function (req, res) {
 
 
 app.get("/settings/:vm", async function (req, res) {
-	if (!req.cookies.token) {
-		return res.redirect("/");
-	}
+	if (!req.cookies.token) return res.redirect("/");
 	let user = await getUserByToken(req.cookies.token);
 	if (!user) {
 		res.clearCookie("token");
@@ -375,9 +357,7 @@ app.get("/settings/:vm", async function (req, res) {
 });
 
 app.get("/burn/:vm", async function (req, res) {
-	if (!req.cookies.token) {
-		return res.redirect("/");
-	}
+	if (!req.cookies.token) return res.redirect("/");
 	let user = await getUserByToken(req.cookies.token);
 	if (!user) {
 		res.clearCookie("token");
@@ -443,9 +423,7 @@ app.get("/burn/:vm", async function (req, res) {
 });
 
 app.get("/shutoff/:vm", async function (req, res) {
-	if (!req.cookies.token) {
-		return res.redirect("/");
-	}
+	if (!req.cookies.token) return res.redirect("/");
 	let user = await getUserByToken(req.cookies.token);
 	if (!user) {
 		res.clearCookie("token");
@@ -539,9 +517,7 @@ app.get("/shutoff/:vm", async function (req, res) {
 });
 
 app.get("/chown/:vm", async function (req, res) {
-	if (!req.cookies.token) {
-		return res.redirect("/");
-	}
+	if (!req.cookies.token) return res.redirect("/");
 	let user = await getUserByToken(req.cookies.token);
 	if (!user) {
 		res.clearCookie("token");
@@ -560,9 +536,7 @@ app.get("/chown/:vm", async function (req, res) {
 });
 
 app.post("/chown/:vm", async function (req, res) {
-	if (!req.cookies.token) {
-		return res.redirect("/");
-	}
+	if (!req.cookies.token) return res.redirect("/");
 	let user = await getUserByToken(req.cookies.token);
 	if (!user) {
 		res.clearCookie("token");
@@ -594,9 +568,7 @@ app.post("/chown/:vm", async function (req, res) {
 });
 
 app.get("/ren/:vm", async function (req, res) {
-	if (!req.cookies.token) {
-		return res.redirect("/");
-	}
+	if (!req.cookies.token) return res.redirect("/");
 	let user = await getUserByToken(req.cookies.token);
 	if (!user) {
 		res.clearCookie("token");
@@ -615,9 +587,7 @@ app.get("/ren/:vm", async function (req, res) {
 });
 
 app.post("/ren/:vm", async function (req, res) {
-	if (!req.cookies.token) {
-		return res.redirect("/");
-	}
+	if (!req.cookies.token) return res.redirect("/");
 	let user = await getUserByToken(req.cookies.token);
 	if (!user) {
 		res.clearCookie("token");
@@ -644,9 +614,7 @@ app.post("/ren/:vm", async function (req, res) {
 });
 
 app.get("/whitectl/:vm", async function (req, res) {
-	if (!req.cookies.token) {
-		return res.redirect("/");
-	}
+	if (!req.cookies.token) return res.redirect("/");
 	let user = await getUserByToken(req.cookies.token);
 	if (!user) {
 		res.clearCookie("token");
@@ -669,9 +637,7 @@ app.get("/whitectl/:vm", async function (req, res) {
 });
 
 app.post("/whitectl/:vm", async function (req, res) {
-	if (!req.cookies.token) {
-		return res.redirect("/");
-	}
+	if (!req.cookies.token) return res.redirect("/");
 	let user = await getUserByToken(req.cookies.token);
 	if (!user) {
 		res.clearCookie("token");
@@ -710,9 +676,7 @@ app.post("/whitectl/:vm", async function (req, res) {
 });
 
 app.get("/whitectlReset/:vm", async function (req, res) {
-	if (!req.cookies.token) {
-		return res.redirect("/");
-	}
+	if (!req.cookies.token) return res.redirect("/");
 	let user = await getUserByToken(req.cookies.token);
 	if (!user) {
 		res.clearCookie("token");
@@ -730,9 +694,7 @@ app.get("/whitectlReset/:vm", async function (req, res) {
 });
 
 app.post("/newInput/:vm", async function (req, res) {
-	if (!req.cookies.token) {
-		return res.redirect("/");
-	}
+	if (!req.cookies.token) return res.redirect("/");
 	let user = await getUserByToken(req.cookies.token);
 	if (!user) {
 		res.clearCookie("token");
@@ -749,9 +711,7 @@ app.post("/newInput/:vm", async function (req, res) {
 });
 
 app.get("/sendInput/:vm", async function (req, res) {
-	if (!req.cookies.token) {
-		return res.redirect("/");
-	}
+	if (!req.cookies.token) return res.redirect("/");
 	let user = await getUserByToken(req.cookies.token);
 	if (!user) {
 		res.clearCookie("token");
@@ -770,9 +730,7 @@ app.get("/sendInput/:vm", async function (req, res) {
 });
 
 app.get("/resize/:vm", async function (req, res) {
-	if (!req.cookies.token) {
-		return res.redirect("/");
-	}
+	if (!req.cookies.token) return res.redirect("/");
 	let user = await getUserByToken(req.cookies.token);
 	if (!user) {
 		res.clearCookie("token");
@@ -795,9 +753,7 @@ app.get("/resize/:vm", async function (req, res) {
 });
 
 app.get("/newVM", async function (req, res) {
-	if (!req.cookies.token) {
-		return res.redirect("/");
-	}
+	if (!req.cookies.token) return res.redirect("/");
 	let user = await getUserByToken(req.cookies.token);
 	if (!user) {
 		res.clearCookie("token");
@@ -819,9 +775,7 @@ app.get("/newVM", async function (req, res) {
 });
 
 app.post("/newVM", async function (req, res) {
-	if (!req.cookies.token) {
-		return res.redirect("/");
-	}
+	if (!req.cookies.token) return res.redirect("/");
 	let user = await getUserByToken(req.cookies.token);
 	if (!user) {
 		res.clearCookie("token");
@@ -831,17 +785,11 @@ app.post("/newVM", async function (req, res) {
 		target: "/",
 		msg: "This operation has been cancelled due to self-blocking in effect on your account (e5). Please contact the system administrator."
 	});
-	if (!user.object.isPRO && Object.keys(user.object.virtuals).length >= 1) {
-		return res.status(400).render(__dirname + "/not_pro_yet.jsembeds", {
-			username: he.encode(user.username)
-		});
-	}
-	if (!user.object.isPRO && (req.body.shouldUse512mbRAM || "off") == "on") {
-		return res.status(400).end();
-	}
-	if (!req.body.distro) {
-		return res.status(400).end();
-	}
+	if (!user.object.isPRO && Object.keys(user.object.virtuals).length >= 1) return res.status(400).render(__dirname + "/not_pro_yet.jsembeds", {
+		username: he.encode(user.username)
+	});
+	if (!user.object.isPRO && (req.body.shouldUse512mbRAM || "off") == "on") return res.status(400).end();
+	if (!req.body.distro) return res.status(400).end();
 
 	if (!req.body.vm_name) return res.redirect("/newVM");
 	if (Object.keys(user.object.virtuals).includes(req.body.vm_name)) return res.redirect("/newVM");
@@ -873,9 +821,7 @@ app.post("/newVM", async function (req, res) {
 });
 
 app.get("/logoff", async function (req, res) {
-	if (!req.cookies.token) {
-		return res.redirect("/");
-	}
+	if (!req.cookies.token) return res.redirect("/");
 	let user = await getUserByToken(req.cookies.token);
 	if (!user) {
 		res.clearCookie("token");
@@ -925,9 +871,7 @@ app.get("/ul_link", async function (req, res) {
 		if (!user) return res.redirect("/user_page");
 		res.clearCookie("token_createfor");
 		res.clearCookie("createfor_password");
-		if (user.object.block_ul) {
-			return res.redirect("https://ultimatelogon.pcprojects.tk/blocked_user?appName=DuckCloud")
-		}
+		if (user.object.block_ul) return res.redirect("https://ultimatelogon.pcprojects.tk/blocked_user?appName=DuckCloud");
 		res.cookie("token", user.token, {
 			maxAge: 30 * 24 * 60 * 60 * 1000
 		});
@@ -1048,9 +992,7 @@ app.post("/user_page", async function (req, res) {
 });
 
 app.get("/manage", async function (req, res) {
-	if (!req.cookies.token) {
-		return res.redirect("/");
-	}
+	if (!req.cookies.token) return res.redirect("/");
 	let user = await getUserByToken(req.cookies.token);
 	if (!user) {
 		res.clearCookie("token");
@@ -1093,9 +1035,7 @@ app.get("/manage", async function (req, res) {
 app.post("/changePassword", async function (req, res) {
 	if (!req.body.oldPassword) return res.redirect("/manage");
 	if (!req.body.newPassword) return res.redirect("/manage");
-	if (!req.cookies.token) {
-		return res.redirect("/");
-	}
+	if (!req.cookies.token) return res.redirect("/");
 	let user = await getUserByToken(req.cookies.token);
 	if (!user) {
 		res.clearCookie("token");
@@ -1116,9 +1056,7 @@ app.post("/changePassword", async function (req, res) {
 
 app.post("/destroyAccount", async function (req, res) {
 	if (!req.body.password) return res.redirect("/manage");
-	if (!req.cookies.token) {
-		return res.redirect("/");
-	}
+	if (!req.cookies.token) return res.redirect("/");
 	let user = await getUserByToken(req.cookies.token);
 	if (!user) {
 		res.clearCookie("token");
@@ -1149,9 +1087,7 @@ app.post("/destroyAccount", async function (req, res) {
 });
 
 app.post("/changeToken", async function (req, res) {
-	if (!req.cookies.token) {
-		return res.redirect("/");
-	}
+	if (!req.cookies.token) return res.redirect("/");
 	let user = await getUserByToken(req.cookies.token);
 	if (!user) {
 		res.clearCookie("token");
@@ -1170,9 +1106,7 @@ app.post("/changeToken", async function (req, res) {
 
 app.post("/ul_unlink", async function (req, res) {
 	if (!req.body.password) return res.redirect("/manage");
-	if (!req.cookies.token) {
-		return res.redirect("/");
-	}
+	if (!req.cookies.token) return res.redirect("/");
 	let user = await getUserByToken(req.cookies.token);
 	if (!user) {
 		res.clearCookie("token");
@@ -1191,9 +1125,7 @@ app.post("/ul_unlink", async function (req, res) {
 });
 
 app.post("/toggle_sharing", async function (req, res) {
-	if (!req.cookies.token) {
-		return res.redirect("/");
-	}
+	if (!req.cookies.token) return res.redirect("/");
 	let user = await getUserByToken(req.cookies.token);
 	if (!user) {
 		res.clearCookie("token");
@@ -1208,9 +1140,7 @@ app.post("/toggle_sharing", async function (req, res) {
 });
 
 app.post("/pro_apply", async function (req, res) {
-	if (!req.cookies.token) {
-		return res.redirect("/");
-	}
+	if (!req.cookies.token) return res.redirect("/");
 	let user = await getUserByToken(req.cookies.token);
 	if (!user) {
 		res.clearCookie("token");
@@ -1251,9 +1181,7 @@ app.post("/pro_apply", async function (req, res) {
 });
 
 app.post("/removeprocode", async function (req, res) {
-	if (!req.cookies.token) {
-		return res.redirect("/");
-	}
+	if (!req.cookies.token) return res.redirect("/");
 	let user = await getUserByToken(req.cookies.token);
 	if (!user) {
 		res.clearCookie("token");
@@ -1284,9 +1212,7 @@ app.post("/removeprocode", async function (req, res) {
 });
 
 app.post("/createprocode", async function (req, res) {
-	if (!req.cookies.token) {
-		return res.redirect("/");
-	}
+	if (!req.cookies.token) return res.redirect("/");
 	let user = await getUserByToken(req.cookies.token);
 	if (!user) {
 		res.clearCookie("token");
@@ -1315,9 +1241,7 @@ app.post("/createprocode", async function (req, res) {
 });
 
 app.post("/selfblocking", async function (req, res) {
-	if (!req.cookies.token) {
-		return res.redirect("/");
-	}
+	if (!req.cookies.token) return res.redirect("/");
 	let user = await getUserByToken(req.cookies.token);
 	if (!user) {
 		res.clearCookie("token");
@@ -1368,9 +1292,7 @@ app.post("/selfblocking", async function (req, res) {
 });
 
 app.post("/recoveryKey", async function (req, res) {
-	if (!req.cookies.token) {
-		return res.redirect("/");
-	}
+	if (!req.cookies.token) return res.redirect("/");
 	let user = await getUserByToken(req.cookies.token);
 	if (!user) {
 		res.clearCookie("token");
@@ -1391,9 +1313,7 @@ app.post("/recoveryKey", async function (req, res) {
 });
 
 app.post("/trustedTechCreate", async function (req, res) {
-	if (!req.cookies.token) {
-		return res.redirect("/");
-	}
+	if (!req.cookies.token) return res.redirect("/");
 	let user = await getUserByToken(req.cookies.token);
 	if (!user) {
 		res.clearCookie("token");
@@ -1414,9 +1334,7 @@ app.post("/trustedTechCreate", async function (req, res) {
 });
 
 app.get("/trustedTechReset", async function (req, res) {
-	if (!req.cookies.token) {
-		return res.redirect("/");
-	}
+	if (!req.cookies.token) return res.redirect("/");
 	let user = await getUserByToken(req.cookies.token);
 	if (!user) {
 		res.clearCookie("token");
@@ -1431,9 +1349,7 @@ app.get("/trustedTechReset", async function (req, res) {
 });
 
 app.get("/trustedTechQuery", async function (req, res) {
-	if (!req.cookies.token) {
-		return res.redirect("/");
-	}
+	if (!req.cookies.token) return res.redirect("/");
 	let user = await getUserByToken(req.cookies.token);
 	if (!user) {
 		res.clearCookie("token");
@@ -1460,9 +1376,7 @@ app.get("/xterm/css/xterm.css", function (req, res) {
 });
 
 app.get("/apidocs", async function (req, res) {
-	if (!req.cookies.token) {
-		return res.redirect("/");
-	}
+	if (!req.cookies.token) return res.redirect("/");
 	let user = await getUserByToken(req.cookies.token);
 	if (!user) {
 		res.clearCookie("token");
@@ -1622,9 +1536,7 @@ io.on("connection", async function (client) {
 				client.emit("datad", "This operation has been cancelled due to self-blocking in effect on your account (e5). Please contact the system administrator.");
 				return client.disconnect();
 			}
-		} else {
-			return client.disconnect();
-		}
+		} else return client.disconnect();
 		if (!Object.keys(user.object.virtuals)[Number(vm)]) return client.disconnect();
 		let a = all_features[user.object.virtuals[Object.keys(user.object.virtuals)[Number(vm)]].id] || {
 			ats: true
@@ -1657,9 +1569,7 @@ io.on("connection", async function (client) {
 					client.emit("datad", "This operation has been cancelled due to self-blocking in effect on your account (e5). Please contact the system administrator.");
 					return client.disconnect();
 				}
-			} else {
-				return client.disconnect();
-			}
+			} else return client.disconnect();
 			client.emit("datad", e.toString());
 		});
 		workspace.on("deletion", async function () {
@@ -1670,9 +1580,7 @@ io.on("connection", async function (client) {
 					client.emit("datad", "This operation has been cancelled due to self-blocking in effect on your account (e5). Please contact the system administrator.");
 					return client.disconnect();
 				}
-			} else {
-				return client.disconnect();
-			}
+			} else return client.disconnect();
 			client.emit("datad", "\r\nYour virtual machine is about to stop (e2). To use this Linux console again, restart your VM.")
 			return client.disconnect();
 		});
@@ -1687,9 +1595,7 @@ io.on("connection", async function (client) {
 					client.emit("datad", "This operation has been cancelled due to self-blocking in effect on your account (e5). Please contact the system administrator.");
 					return client.disconnect();
 				}
-			} else {
-				return client.disconnect();
-			}
+			} else return client.disconnect();
 			a.started_shell.write(String(e || ""));
 		});
 		client.on("resize", async function (w, h) {
@@ -1704,9 +1610,7 @@ io.on("connection", async function (client) {
 					client.emit("datad", "\r\nThis operation has been cancelled due to self-blocking in effect on your account (e5). Please contact the system administrator.");
 					return client.disconnect();
 				}
-			} else {
-				return client.disconnect();
-			}
+			} else return client.disconnect();
 			a.exec.resize({
 				w: w,
 				h: h
@@ -1720,9 +1624,7 @@ io.on("connection", async function (client) {
 				client.emit("datad", "This operation has been cancelled due to self-blocking in effect on your account (e5). Please contact the system administrator.");
 				return client.disconnect();
 			}
-		} else {
-			return client.disconnect();
-		}
+		} else return client.disconnect();
 		let id = "";
 		if (typeof vm === "number") {
 			if (!Object.keys(user.object.virtuals)[Number(vm)]) return client.disconnect();
@@ -1770,12 +1672,8 @@ io.on("connection", async function (client) {
 			client.emit("datad", "Error while using connection (e4).\nThe root cause:\n\tThe connection was reset or failed. It's really unexplainable.\nPossible fixes:\n\tThink about your server. Check if you are listening on localhost - you need to listen on 0.0.0.0.");
 			return client.disconnect();
 		});
-		connection.on("close", function() {
-			return client.disconnect();
-		});
-		connection.on("end", function() {
-			return client.disconnect();
-		});
+		connection.on("close", () => client.disconnect());
+		connection.on("end", () => client.disconnect());
 		connection.on("data", async function(tcpBuf) {
 			user = await getUserByToken(cookie.parse(client.handshake.headers.cookie).token);
 			if (user) {
@@ -1783,9 +1681,7 @@ io.on("connection", async function (client) {
 					client.emit("datad", "\r\nThis operation has been cancelled due to self-blocking in effect on your account (e5). Please contact the system administrator.");
 					return client.disconnect();
 				}
-			} else {
-				return client.disconnect();
-			}
+			} else return client.disconnect();
 			client.emit("datad", tcpBuf);
 		});
 		// Socket.IO handling
@@ -1796,9 +1692,7 @@ io.on("connection", async function (client) {
 					client.emit("datad", "\r\nThis operation has been cancelled due to self-blocking in effect on your account (e5). Please contact the system administrator.");
 					return client.disconnect();
 				}
-			} else {
-				return client.disconnect();
-			}
+			} else return client.disconnect();
 			connection.write(tcpBuf);
 		});
 		client.once("disconnect", function() {
