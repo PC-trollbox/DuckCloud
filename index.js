@@ -743,10 +743,17 @@ app.post("/ramset/:vm", async function (req, res) {
 		msg: "Wrong VM memory amount, need at least 8 MB"
 	});
 	let container = await docker.getContainer(user.object.virtuals[Object.keys(user.object.virtuals)[Number(req.params.vm)]].id);
-	await container.update({
-		Memory: rams * 1024 * 1024,
-		MemorySwap: (rams + 1) * 1024 * 1024
-	})
+	try {
+		await container.update({
+			Memory: rams * 1024 * 1024,
+			MemorySwap: (rams + 1) * 1024 * 1024
+		});
+	} catch {
+		res.status(500).render(__dirname + "/redirector.jsembeds", {
+			target: "/ramset/" + req.params.vm,
+			msg: "Something is wrong!"
+		});
+	}
 	res.redirect("/settings/" + req.params.vm);
 });
 
