@@ -149,6 +149,20 @@
         <br>
         Removes all users from the whitelist, blocking all TCP access to the VM (you can still access it tho!)
         <hr>
+        <h3>GET <a href="/ramset/0">/ramset/:vmNumber</a></h3>
+        <em>This operation requires proper logon. Users will get redirected to / if they have an incorrect token or didn't log in yet.</em>
+        <br>
+        Shows a GUI RAM setting control panel.
+        <hr>
+        <h3>POST /ramset/:vmNumber</h3>
+        <em>This operation requires proper logon. Users will get redirected to / if they have an incorrect token or didn't log in yet.</em>
+        <br>
+        Params: encode in JSON or URLencoded
+        <br>
+        <code>ramset</code> - RAM amount to set, in MB. Floating-points will be rounded. No more than 512 MB. The limit is 128 MB for regular users.
+        <br>
+        Sets an amount of RAM needed for the VM.
+        <hr>
         <h3>POST /newInput/:vmNumber</h3>
         <em>This operation requires proper logon. Users will get redirected to / if they have an incorrect token or didn't log in yet.</em>
         <br>
@@ -174,7 +188,7 @@
         <br>
         <code>h</code> - Height (rows)
         <br>
-        Tells the pty to adapt to the new dimensions - for example sets process.stdout.columns in Node.JS.
+        Tells the pty to adapt to the new dimensions - for example, sets process.stdout.columns in Node.JS.
         <hr>
         <h3>GET <a href="/newVM">/newVM</a></h3>
         <em>This operation requires proper logon. Users will get redirected to / if they have an incorrect token or didn't log in yet.</em>
@@ -318,9 +332,9 @@
         <br>
         <code>block_ID</code> - set to <code>on</code> to block THE WHOLE ACCOUNT.
         <br>
-        <code>block_ULID</code> - set to <code>on</code> to block using the account through UltimateLogon. You can still use normal username/password.
+        <code>block_ULID</code> - set to <code>on</code> to block using the account through UltimateLogon. The user can still use normal username/password.
         <br>
-        Strip down some of core DuckCloud mechanics in case you get hacked. The best way to get your account secured is still creating a new password, but if you are in a situation you can't - DuckCloud selfblocking's got your back.
+        Strip down some of core DuckCloud mechanics in case the user gets hacked. The best way to get their account secured is still creating a new password, but if they are in a situation they can't - DuckCloud selfblocking's got the user's back.
         <br>
         Your application still doesn't need to do this do the user, but if you wanna annoy them - feel free to use this feature.
         <hr>
@@ -329,7 +343,11 @@
         <br>
         <em>This operation requires the user to be logged without a Technician Token (using the normal token).</em>
         <br>
-        Creates a recovery key for the user and replies with the key on a redirect page.
+        Params: encode in JSON or URLencoded
+        <br>
+        <code>password</code> - DuckCloud secret for confirmation of identity.
+        <br>
+        Creates or replaces a recovery key for the user and replies with the key on a redirect page.
         <hr>
         <h3>POST /trustedTechCreate</h3>
         <em>This operation requires proper logon. Users will get redirected to / if they have an incorrect token or didn't log in yet.</em>
@@ -363,7 +381,9 @@
         <hr>
         <h3>GET <a href="/cors">/cors</a></h3>
         <br>
-        CORS editing page. You can get CORS for a domain on this page. Every domain you type in will be allowed! For even more effect, use <code>non-existing.domain.loc</code> as a domain.
+        CORS editing page. A domain name can get CORS for an IP on this page. Every domain the IP user type in will be allowed! For even more effect, use <code>non-existing.domain.loc</code> as a domain.
+        <br>
+        Note. Using a referrer will be noticed and will open an automatic CORS opening flow.
         <hr>
         <h3>POST /botpuzzl</h3>
         <em>This operation requires proper logon. Users will get an alert code sent if they have an incorrect token or didn't log in yet.</em>
@@ -391,10 +411,14 @@
         <br>
         Returns the contact information.
         <hr>
-        <h2>Socket.IO API</h2>
-        You should use THIS for I/O on the user's VMs, not the HTTP calls - as HTTP can be easily damaged and it's not that fast as you think.
+        <h3>GET <a href="/not_implemented">/not_implemented</a></h3>
         <br>
-        Any bad Socket.IO API call - and you get disconnected. This is a protection measure - the servers should be mostly up.
+        Returns the Not Implemented error.
+        <hr>
+        <h2>Socket.IO API</h2>
+        You should use THIS for I/O on the user's VMs, not the HTTP calls. HTTP calls will be very expensive to use.
+        <br>
+        Any bad Socket.IO API call - and your application get disconnected. This is a protection measure.
         <hr>
         <h3><code>emit("vmselect", Number vmNumber)</code></h3>
         <br>
@@ -410,14 +434,14 @@
         <hr>
         <h3><code>emit("resize", Number w, Number h)</code></h3>
         <br>
-        Tells the pty to adapt to the new dimensions - for example sets process.stdout.columns in Node.JS.
+        Tells the pty to adapt to the new dimensions - for example, sets process.stdout.columns in Node.JS.
         <hr>
         <hr>
         <h3><code>emit("tcp_vmselect", Number vmNumber || String vmId, Number port)</code></h3>
         <br>
         Registers your client for usage with the selected VM TCP connection. Can only be called once!
         <br>
-        If String vmId is used, you must be included in the whitelist or click-based access control must be enabled on the target VM.
+        If String vmId is used, the user must be included in the whitelist or click-based access control must be enabled on the target VM.
         <br>
         And the VM, of course, has to exist.
         <hr>
@@ -449,7 +473,7 @@
         <br>
         e5 - There is self-blocking applied! Take it off.
         <br>
-        e6 - You should <code>clear</code>.
+        e6 - The user should <code>clear</code>!
         <br>
         e7 - Unreachable error (cleaning required by Node.JS internals)
         <br>

@@ -139,3 +139,9 @@ pre {
     overflow-x: hidden;
     white-space: pre;
 }
+
+.subheader {
+    font-weight: bold;
+    color: #a0a0a0;
+    font-style: italic;
+}

@@ -78,6 +78,8 @@
 		Stale: <b><nodejs-embed>isRecoveryKeyStale</nodejs-embed></b> (the staleness is enabled if you don't have a recovery key, like after a successful account recovery, not if your key is too old)
 		<br>
 		<form action="/recoverykey" method="post">
+			Your DuckCloud secret: <input name="password" type="password" required></input>
+			<br>
 			<button>Rotate recovery key</button>
 		</form>
 		<hr>

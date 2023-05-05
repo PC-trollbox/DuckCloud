@@ -12,20 +12,28 @@
 		<h1>☁️ DuckCloud</h1>
 		<hr>
 		<form action="/newVM" method="post">
-			<a href="/" class="arrow">←</a>
+			<a href="/" class="arrow">←</a> Creating a VM
+			<br>
+			<b class="subheader">Basics:</b> You mist fill this in. The VM name can be changed. The distro or preset cannot be changed later. The VM will be based on Linux.
+			<br>
 			<label>VM name</label>: <input name="vm_name" placeholder="CloudVM" required></input>
 			<br>
-			Linux distro: <select name="distro" required>
-				<option value="debian">Debian (11 bullseye)</option>
-				<option value="archlinux">Arch Linux (btw; 2023.02.01)</option>
-				<option value="duckcloud/suspiral" selected>Suspiral (11 bullseye)</option>
+			Select a distro or a preset: <select name="distro" required>
+				<option value="debian">Debian (11 aka bullseye)</option>
+				<option value="archlinux">Arch Linux (2023.02.01)</option>
+				<option value="duckcloud/suspiral" selected>Suspiral (11 aka bullseye)</option>
 				<option value="centos">CentOS (8.4.2105; eol)</option>
+				<option value="preset1" disabled>Presets feature coming soon...</option>
 			</select>
+			<hr>
+			<b class="subheader">Network:</b> By default, your VMs have no network. If you have agree to a networking agreement (opens automatically after you click this checkbox), you can access the Internet. This can't be changed later.
 			<br>
 			<input name="shouldHaveNetworking" onclick="NetworkingAgreement(this)" type="checkbox"></input> Enable networking
+			<hr>
+			<b class="subheader">RAM:</b> By default, your VMs have 128 MB. If you have a PRO flag, you can boost RAM amount to 512 MB. You can adjust this amount later in the settings.
 			<br>
-			<input name="shouldUse512mbRAM" type="checkbox"></input> PRO: boost 128 MB of RAM to 512 MB of RAM
-			<br>
+			<input name="shouldUse512mbRAM" type="checkbox"></input> Boost 128 MB of RAM to 512 MB of RAM (PRO flag)
+			<hr>
 			<button>Create</button>
 		</form>
 
@@ -35,11 +43,11 @@
 				while (el.checked) {
 					let conf = confirm("Read and confirm the Networking Agreement.\n---\nQuick Reference: s1\n\nThe IP is gonna be PC's real IP. You can attempt a DoS or a DDoS attack but PC doesn't open a port + no allocated IP + IP is dynamic (changes every router restart)");
 					if (!conf) break;
-					conf = confirm("Read and confirm the Networking Agreement.\n---\nQuick Reference: s2\n\nYou are NOT allowed to hack anyone with the network assigned to you.\nSome sites are blocked because PC is russian and uses a russian ISP.");
+					conf = confirm("Read and confirm the Networking Agreement.\n---\nQuick Reference: s2\n\nYou are NOT allowed to hack anyone with the network assigned to you.\nSome sites are blocked because PC is in Russia and uses a Russian ISP. This has to do with Roskomnadzor (The Federal Service for Supervision of Communications, Information Technology and Mass Media).");
 					if (!conf) break;
-					conf = confirm("Read and confirm the Networking Agreement.\n---\nQuick Reference: s3\n\nAvoid any blocked sites. You may use a VPN. But without a VPN you shouldn't do anything bad. You should try and use the Internet as you would use one in Russia.");
+					conf = confirm("Read and confirm the Networking Agreement.\n---\nQuick Reference: s3\n\nAvoid any blocked sites. The guide at https://reestr.rublacklist.net/en/ might help you. You may use a VPN or a proxy. You should try and use the Internet as you would use one in Russia. Services for Linux will mostly be available.");
 					if (!conf) break;
-					conf = confirm("Read and confirm the Networking Agreement.\n---\n\nNow, do you accept this agreement? If not, the networking won't be enabled.");
+					conf = confirm("Read and confirm the Networking Agreement.\n---\n\nDo you accept this agreement? If not, networking won't be enabled and access to the Internet will be missing.");
 					if (!conf) break;
 					return;
 				}

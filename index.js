@@ -693,6 +693,63 @@ app.get("/whitectlReset/:vm", async function (req, res) {
 	res.redirect("/whitectl/" + req.params.vm);
 });
 
+app.get("/ramset/:vm", async function (req, res) {
+	if (!req.cookies.token) return res.redirect("/");
+	let user = await getUserByToken(req.cookies.token);
+	if (!user) {
+		res.clearCookie("token");
+		return res.redirect("/");
+	}
+	if (!Object.keys(user.object.virtuals)[Number(req.params.vm)]) return res.redirect("/main");
+	if (user.object.blockEnumVM) return res.status(403).render(__dirname + "/redirector.jsembeds", {
+		target: "/",
+		msg: "This operation has been cancelled due to self-blocking in effect on your account (e5). Please contact the system administrator."
+	});
+	res.render(__dirname + "/ramset.jsembeds", {
+		username: he.encode(user.username),
+		vm_count: req.params.vm,
+		vm_name: he.encode(Object.keys(user.object.virtuals)[Number(req.params.vm)])
+	});
+});
+
+app.post("/ramset/:vm", async function (req, res) {
+	if (!req.cookies.token) return res.redirect("/");
+	let user = await getUserByToken(req.cookies.token);
+	if (!user) {
+		res.clearCookie("token");
+		return res.redirect("/");
+	}
+	if (!Object.keys(user.object.virtuals)[Number(req.params.vm)]) return res.redirect("/main");
+	if (user.object.blockEnumVM) return res.status(403).render(__dirname + "/redirector.jsembeds", {
+		target: "/",
+		msg: "This operation has been cancelled due to self-blocking in effect on your account (e5). Please contact the system administrator."
+	});
+	let rams = Number(req.body.ramset);
+	if (!rams) return res.status(400).render(__dirname + "/redirector.jsembeds", {
+		target: "/ramset/" + req.params.vm,
+		msg: "Wrong VM memory amount!"
+	});
+	rams = Math.round(rams);
+	if (rams > 128 && !user.object.isPRO) return res.status(400).render(__dirname + "/redirector.jsembeds", {
+		target: "/ramset/" + req.params.vm,
+		msg: "Wrong VM memory amount for a non-PRO account!"
+	});
+	if (rams > 512) return res.status(400).render(__dirname + "/redirector.jsembeds", {
+		target: "/ramset/" + req.params.vm,
+		msg: "Wrong VM memory amount for a PRO account!"
+	});
+	if (rams < 8) return res.status(400).render(__dirname + "/redirector.jsembeds", {
+		target: "/ramset/" + req.params.vm,
+		msg: "Wrong VM memory amount, need at least 8 MB"
+	});
+	let container = await docker.getContainer(user.object.virtuals[Object.keys(user.object.virtuals)[Number(req.params.vm)]].id);
+	await container.update({
+		Memory: rams * 1024 * 1024,
+		MemorySwap: (rams + 1) * 1024 * 1024
+	})
+	res.redirect("/settings/" + req.params.vm);
+});
+
 app.post("/newInput/:vm", async function (req, res) {
 	if (!req.cookies.token) return res.redirect("/");
 	let user = await getUserByToken(req.cookies.token);
@@ -817,7 +874,7 @@ app.post("/newVM", async function (req, res) {
 		id: red.Id
 	};
 	await db.set(user.username, user.object);
-	res.redirect("/main");
+	res.redirect("/settings/" + (Object.keys(user.object.virtuals).length - 1));
 });
 
 app.get("/logoff", async function (req, res) {
@@ -1256,33 +1313,20 @@ app.post("/selfblocking", async function (req, res) {
 		newFlags.cannotPRO = true;
 		if (user.object.isPRO) newFlags.isPRO = false;
 	}
-	if (req.body.block_enumVM == "on" && !user.object.blockEnumVM) {
-		newFlags.blockEnumVM = true;
-	}
-	if (req.body.block_ID == "on" && !user.object.blockLogin) {
-		newFlags.blockLogin = true;
-	}
-	if (req.body.block_ULID == "on" && !user.object.block_ul) {
-		newFlags.block_ul = true;
-	}
+	if (req.body.block_enumVM == "on" && !user.object.blockEnumVM) newFlags.blockEnumVM = true;
+	if (req.body.block_ID == "on" && !user.object.blockLogin) newFlags.blockLogin = true;
+	if (req.body.block_ULID == "on" && !user.object.block_ul) newFlags.block_ul = true;
 	let userfriendly = "";
 	for (let flag in newFlags) {
-		if (flag == "cannotPRO") {
-			userfriendly = userfriendly + "<em>Disabled the ability to gain PRO flag</em><br>";
-		} else if (flag == "isPRO") {
-			userfriendly = userfriendly + "<em>Disabled the PRO flag</em><br>";
-		} else if (flag == "blockEnumVM") {
-			userfriendly = userfriendly + "<em>Disabled the ability to use virtual machines</em><br>";
-		} else if (flag == "blockLogin") {
-			userfriendly = userfriendly + "<em>Disabled your account</em><br>";
-		} else if (flag == "block_ul") {
-			userfriendly = userfriendly + "<em>Disabled usage of UltimateLogon</em><br>";
-		} else {
-			userfriendly = userfriendly + `<em>Unknown flag <code>${he.encode(flag||"")}</code> set to <code>${he.encode(newFlags[flag]||"")}</code></em><br>`
-		}
+		if (flag == "cannotPRO") userfriendly = userfriendly + "<em>Disabled the ability to gain PRO flag</em><br>";
+		else if (flag == "isPRO") userfriendly = userfriendly + "<em>Disabled the PRO flag</em><br>";
+		else if (flag == "blockEnumVM") userfriendly = userfriendly + "<em>Disabled the ability to use virtual machines</em><br>";
+		else if (flag == "blockLogin") userfriendly = userfriendly + "<em>Disabled your account</em><br>";
+		else if (flag == "block_ul") userfriendly = userfriendly + "<em>Disabled usage of UltimateLogon</em><br>";
+		else userfriendly = userfriendly + `<em>Unknown flag <code>${he.encode(flag||"")}</code> set to <code>${he.encode(newFlags[flag]||"")}</code></em><br>`;
 		user.object[flag] = newFlags[flag];
 	}
-	if (!userfriendly) userfriendly = "<b>No new self-blocks were introduced.</b>"
+	if (!userfriendly) userfriendly = "<b>No new self-blocks were introduced.</b>";
 	await db.set(user.username, user.object);
 	res.render(__dirname + "/redirector.jsembeds", {
 		target: "/manage",
@@ -1301,6 +1345,10 @@ app.post("/recoveryKey", async function (req, res) {
 	if (user.isTechToken) return res.render(__dirname + "/redirector.jsembeds", {
 		target: "/manage",
 		msg: "This feature is limited to users. You are logged in as a trusted technician at this moment."
+	});
+	if (SHA256(req.body.password) != user.object.password) return res.render(__dirname + "/redirector.jsembeds", {
+		target: "/manage",
+		msg: "Wrong password."
 	});
 	let recoveryKey = genToken(512);
 	user.object.recoveryKey = SHA256(recoveryKey);
@@ -1513,6 +1561,10 @@ app.get("/contact", function(req, res) {
 	res.render(__dirname + "/contactInfo.jsembeds", {
 		adminemail: admin_email
 	});
+});
+
+app.get("/not_implemented", async function(req, res) {
+	res.status(501).sendFile(__dirname + "/not_implemented.html");
 });
 
 app.use(function (req, res) {
