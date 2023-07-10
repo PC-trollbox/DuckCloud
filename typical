@@ -1,10 +1,7 @@
 #!/bin/bash
 # This file is used internally!!!! But you can use it outside of PC's server as it's useful!
 sudo service docker start
-sudo iptables -I FORWARD -d 192.168.0.0/24 -i docker0 -j REJECT --reject-with icmp-port-unreachable # Disable local network
-sudo iptables -I FORWARD -d 172.18.235.0/20 -i docker0 -j REJECT --reject-with icmp-port-unreachable # Disable local network for WSL
-echo 0 | sudo tee /proc/sys/fs/binfmt_misc/WSLInterop # Disable executing Windows in WSL
-echo nameserver 1.1.1.1 | sudo tee /etc/resolv.conf # Add a name server that isn't local.
+sudo iptables -I FORWARD -d 192.168.0.0/16 -i docker0 -j REJECT --reject-with icmp-port-unreachable # Disable local network
 while true; do
-    /home/pc/.nvm/versions/node/v19.1.0/bin/node index.js &>> errorlogging.log # Replace with your path to node if you decided to use this script
+    node index.js &>> errorlogging.log
 done

@@ -465,7 +465,7 @@ app.get("/shutoff/:vm", async function (req, res) {
 				AttachStdin: true,
 				AttachStdout: true,
 				AttachStderr: true,
-				Privileged: true
+				Privileged: false
 			});
 			our_vm.started_shell = await our_vm.exec.start({
 				Tty: true,
