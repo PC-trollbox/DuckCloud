@@ -65,10 +65,10 @@
         Shows a GUI with all the VMs. Your application can still request a computer-readable list without worrying about parsing HTML.
         <hr>
         <h3>GET <a href="/listContainer">/listContainer</a></h3>
+        <em>This operation requires proper logon. Users will get redirected to / if they have an incorrect token or didn't log in yet.</em>
         <br>
         Sends computer-readable list of VMs. For example:
         <pre>[
-        <em>This operation requires proper logon. Users will get redirected to / if they have an incorrect token or didn't log in yet.</em>
     {
         "vmname": "MyVM",
         "vmname_encoded": "MyVM",
