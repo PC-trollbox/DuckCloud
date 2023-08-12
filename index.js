@@ -25,46 +25,8 @@ function setTimeoutAsync(ms) {
 	});
 }
 const cookie = require("cookie");
-const { User, db, knex_inited } = require("./realdb.js");
+const { User, db } = require("./realdb.js");
 
-async function createSchema(name, tableFn) {
-    if (await knex_inited.schema.hasTable(name)) return
-    await knex_inited.schema.createTable(name, tableFn);
-}
-
-function usersFn(table) {
-    table.increments("id").primary();
-    table.string("name");
-    table.string("password");
-    table.string("token");
-    table.boolean("_isPRO");
-    table.boolean("_disableSharing");
-    table.string("_technicians");
-    table.string("linkedTo");
-    table.string("recoveryKey");
-    table.boolean("_cannotPRO");
-    table.boolean("_blockEnumVM");
-    table.boolean("_blockLogin");
-    table.boolean("_block_ul");
-	table.string("_procodes");
-	table.boolean("_isCertifiedTechnician");
-}
-
-function vmsFn(table) {
-    table.string("id").primary();
-    table.string("name");
-    table.boolean("_clickbased");
-    table.string("_whitelist");
-    table.integer("user_id").references("id").inTable("users");
-}
-
-(async function Main() {
-    console.log("Creating schemas...");
-    await createSchema("users", usersFn);
-    console.log("Created schema users");
-    await createSchema("vms", vmsFn);
-    console.log("Created schema vms");
-})();
 let all_features = {};
 engine(app, {
 	embedOpen: "<nodejs-embed>",
