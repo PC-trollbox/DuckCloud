@@ -25,53 +25,265 @@ function setTimeoutAsync(ms) {
 	});
 }
 const cookie = require("cookie");
+const objection = require("objection");
+const knex = require("knex");
+
 const db = {
 	get: async function (item) {
-		return this.db[item];
+		return (await User.query().where("name", item).withGraphFetched("_virtuals").limit(1))[0];
 	},
 	set: async function (item, content) {
-		while (fs.existsSync(__dirname + "/db.lok")) {
-			await setTimeoutAsync(500);
+        content._technicians = JSON.stringify(content.technicians || []) || "[]";
+        content._isPRO = content.isPRO;
+        content._disableSharing = content.disableSharing;
+        content._cannotPRO = content.cannotPRO;
+        content._blockEnumVM = content.blockEnumVM;
+        content._blockLogin = content.blockLogin;
+        content._block_ul = content.block_ul;
+		content._procodes = JSON.stringify(content.procodes || []) || "[]";
+        delete content.technicians;
+        delete content.isPRO;
+        delete content.disableSharing;
+        delete content.cannotPRO;
+        delete content.blockEnumVM;
+        delete content.blockLogin;
+        delete content.block_ul;
+		delete content.procodes;
+        let virtuals = content.virtuals;
+        delete content.virtuals;
+		let count = await User.query().where("name", item).count();
+        count = count[0]["count(*)"];
+        if (count == 0) await User.query().insertGraph({
+                name: item,
+                ...content
+            });
+        else await User.query().where("name", item).update(content);
+        let getId = (await db.get(item)).id;
+
+		await VMEntry.query().where("user_id", getId).delete();
+        for (let vm in virtuals) {
+            virtuals[vm].user_id = getId;
+            virtuals[vm].name = vm;
+			virtuals[vm]._whitelist = JSON.stringify(virtuals[vm].whitelist || []) || "[]";
+			virtuals[vm]._clickbased = virtuals[vm].clickbased;
+			delete virtuals[vm].whitelist;
+			delete virtuals[vm].clickbased;
+            await VMEntry.query().insertGraph(virtuals[vm]);
 		}
-		fs.writeFileSync(__dirname + "/db.lok", "The database lock file!\r\nIf you got permanently locked:\r\nDelete this file.\r\nCause of lock: db.set");
-		fs.chmodSync(__dirname + "/db.lok", 448);
-		var db = JSON.parse(JSON.stringify(this.db));
-		db[item] = content;
-		this.db = db;
-		fs.rmSync(__dirname + "/db.lok", {
-			force: true
-		});
 	},
 	delete: async function (item) {
-		while (fs.existsSync(__dirname + "/db.lok")) {
-			await setTimeoutAsync(500);
-		}
-		fs.writeFileSync(__dirname + "/db.lok", "The database lock file!\r\nIf you got permanently locked:\r\nDelete this file.\r\nCause of lock: db.delete");
-		fs.chmodSync(__dirname + "/db.lok", 448);
-		var db = JSON.parse(JSON.stringify(this.db));
-		delete db[item];
-		this.db = db;
-		fs.rmSync(__dirname + "/db.lok", {
-			force: true
-		});
+        await User.query().where("name", item).delete();
 	},
 	list: async function () {
-		return Object.keys(this.db)
+		return (await User.query().select("name")).map(u => u.name);
 	},
-	db: null,
-	get db() {
-		return JSON.parse(require("fs").readFileSync(__dirname + "/db.json"));
-	},
-	set db(val) {
-		require("fs").writeFileSync(__dirname + "/db.json", JSON.stringify(val, null, "\t"));
-	}
 };
-const promisifyStream = stream => new Promise((resolve, reject) => {
-	let myData = Buffer.from("");
-	stream.on('data', data => myData = Buffer.concat([myData, data]))
-	stream.on('end', () => resolve(myData))
-	stream.on('error', reject)
+
+const knex_inited = knex({
+    client: "sqlite3",
+    useNullAsDefault: true,
+    connection: {
+        filename: "./cloud.sqlite3"
+    }
 });
+
+const objectionModel = objection.Model;
+objectionModel.knex(knex_inited);
+
+class User extends objectionModel {
+    #technicians = null;
+    #isPRO = null;
+    #disableSharing = null;
+    #cannotPRO = null;
+    #blockEnumVM = null;
+    #blockLogin = null;
+    #block_ul = null;
+    #virtuals = null;
+	#procodes = null;
+    static get tableName() {
+        return "users";
+    }
+
+    static get relationMappings() {
+        return {
+            _virtuals: {
+                relation: objectionModel.HasManyRelation,
+                modelClass: VMEntry,
+                join: {
+                    from: "users.id",
+                    to: "vms.user_id"
+                }
+            }
+        }       
+    }
+
+    get technicians() {
+        if (this.#technicians === null) this.#technicians = JSON.parse(this._technicians || "[]") || [];
+        return this.#technicians;
+    }
+
+    set technicians(val) {
+        if (this.#technicians === null) this.#technicians = JSON.parse(this._technicians || "[]") || [];
+        this.#technicians = val;
+    }
+
+    get isPRO() {
+        if (this.#isPRO === null) this.#isPRO = !!this._isPRO;
+        return this.#isPRO;
+    }
+
+    set isPRO(val) {
+        if (this.#isPRO === null) this.#isPRO = !!this._isPRO;
+        this.#isPRO = val;
+    }
+
+    get disableSharing() {
+        if (this.#disableSharing === null) this.#disableSharing = !!this._disableSharing;
+        return this.#disableSharing;
+    }
+
+    set disableSharing(val) {
+        if (this.#disableSharing === null) this.#disableSharing = !!this._disableSharing;
+        this.#disableSharing = val;
+    }
+
+    get cannotPRO() {
+        if (this.#cannotPRO === null) this.#cannotPRO = !!this._cannotPRO;
+        return this.#cannotPRO;
+    }
+
+    set cannotPRO(val) {
+        if (this.#cannotPRO === null) this.#cannotPRO = !!this._cannotPRO;
+        this.#cannotPRO = val;
+    }
+
+    get blockEnumVM() {
+        if (this.#blockEnumVM === null) this.#blockEnumVM = !!this._blockEnumVM;
+        return this.#blockEnumVM;
+    }
+
+    set blockEnumVM(val) {
+        if (this.#blockEnumVM === null) this.#blockEnumVM = !!this._blockEnumVM;
+        this.#blockEnumVM = val;
+    }
+
+    get blockLogin() {
+        if (this.#blockLogin === null) this.#blockLogin = !!this._blockLogin;
+        return this.#blockLogin;
+    }
+
+    set blockLogin(val) {
+        if (this.#blockLogin === null) this.#blockLogin = !!this._blockLogin;
+        this.#blockLogin = val;
+    }
+
+    get block_ul() {
+        if (this.#block_ul === null) this.#block_ul = !!this._block_ul;
+        return this.#block_ul;
+    }
+
+    set block_ul(val) {
+        if (this.#block_ul === null) this.#block_ul = !!this._block_ul;
+        this.#block_ul = val;
+    }
+
+    get virtuals() {
+        if (this.#virtuals === null) this.#virtuals = this.convertVirtuals(this._virtuals);
+        return this.#virtuals;
+    }
+
+    set virtuals(val) {
+        if (this.#virtuals === null) this.#virtuals = this.convertVirtuals(this._virtuals);
+        this.#virtuals = val;
+    }
+
+    convertVirtuals(obj) {
+        let virtualsList = {};
+        for (let virtual of obj) {
+            let name = virtual.name;
+            delete virtual.name;
+            virtualsList[name] = virtual;
+        }
+        return virtualsList;
+    }
+
+	get procodes() {
+		if (this.#procodes === null) this.#procodes = JSON.parse(this._procodes || "[]") || [];
+		return this.#procodes;
+	}
+
+	set procodes(val) {
+		if (this.#procodes === null) this.#procodes = JSON.parse(this._procodes || "[]") || [];
+		this.#procodes = val;
+	}
+}
+
+class VMEntry extends objectionModel {
+    static get tableName() {
+        return "vms";
+    }
+
+	#whitelist = null;
+	#clickbased = null;
+
+    get whitelist() {
+		if (this.#whitelist === null) this.#whitelist = JSON.parse(this._whitelist || "[]") || [];
+        return this.#whitelist;
+    }
+
+	set whitelist(val) {
+		if (this.#whitelist === null) this.#whitelist = JSON.parse(this._whitelist || "[]") || [];
+		this.#whitelist = val;
+	}
+
+    get clickbased() {
+		if (this.#clickbased === null) this.#clickbased = !!this._clickbased;
+        return this.#clickbased;
+    }
+
+	set clickbased(val) {
+		if (this.#clickbased === null) this.#clickbased = !!this._clickbased;
+		this.#clickbased = val;
+	}
+}
+
+async function createSchema(name, tableFn) {
+    if (await knex_inited.schema.hasTable(name)) return
+    await knex_inited.schema.createTable(name, tableFn);
+}
+
+function usersFn(table) {
+    table.increments("id").primary();
+    table.string("name");
+    table.string("password");
+    table.string("token");
+    table.boolean("_isPRO");
+    table.boolean("_disableSharing");
+    table.string("_technicians");
+    table.string("linkedTo");
+    table.string("recoveryKey");
+    table.boolean("_cannotPRO");
+    table.boolean("_blockEnumVM");
+    table.boolean("_blockLogin");
+    table.boolean("_block_ul");
+	table.string("_procodes");
+}
+
+function vmsFn(table) {
+    table.string("id").primary();
+    table.string("name");
+    table.boolean("_clickbased");
+    table.string("_whitelist");
+    table.integer("user_id").references("id").inTable("users");
+}
+
+(async function Main() {
+    console.log("Creating schemas...");
+    await createSchema("users", usersFn);
+    console.log("Created schema users");
+    await createSchema("vms", vmsFn);
+    console.log("Created schema vms");
+})();
 let all_features = {};
 engine(app, {
 	embedOpen: "<nodejs-embed>",
@@ -155,26 +367,28 @@ function genToken(long = 16) {
 //Get user by token
 async function getUserByToken(token) {
 	if (fs.existsSync(__dirname + "/duckcloud.blok")) return null;
+	let username_normtoken = (await User.query().where("token", token).select("name"))[0].name;
+	if (username_normtoken) return {
+		object: await db.get(username_normtoken),
+		username: username_normtoken,
+		token: token
+	}
 	let users = await db.list();
 	for (let user of users) {
 		let obj = await db.get(user);
-		if (obj.blockLogin) continue;
 		for (let technician of obj.technicians) if (technician == token) return { object: obj, username: user, token: token, isTechToken: true };
-		if (obj.token == token) return { object: obj, username: user, token: token };
 	}
 	return null;
 }
 
 //Get user by DuckCloud assigned token
 async function findUserByDuckCloudAssignedToken(token) {
-	let users = await db.list();
-	for (let user of users) {
-		let obj = await db.get(user);
-		if (obj.linkedTo == token) return {
-			object: obj,
-			username: user,
-			token: obj.token
-		};
+	if (fs.existsSync(__dirname + "/duckcloud.blok")) return null;
+	let username = (await User.query().where("linkedTo", token).select("name"))[0];
+	if (username) return {
+		object: await db.get(username),
+		username: username,
+		token: token
 	}
 	return null;
 }
@@ -297,12 +511,17 @@ app.get("/main", async function (req, res) {
 	if (user.isTechToken) dockers = dockers + "<div class=\"object\"><center><b>You are running as a technician</b>. <a href=\"/trustedTechReset\" onclick=\"return confirm('Are you really done with this account? Resetting your session will immediately log you off, and you will not be able to log back into this account.');\">Reset your session</a> or <a href=\"/logoff\" onclick=\"return confirm('Only use this when you are not able to fix the problem right now and want to return to it later. If you are 100% done, reset your session!');\">log out</a> when you're done.</center></div><br>"
 	if (user.object.virtuals && !user.object.blockEnumVM) {
 		for (let vm in user.object.virtuals) {
-			let top = 0;
-			let container = docker.getContainer(user.object.virtuals[vm].id);
-			let state = await container.inspect();
-			state = state.State.Running ? "online" : "offline";
-			top = (Object.keys(user.object.virtuals).indexOf(vm)) * 10;
-			dockers = dockers + "<a class=\"object vmsetlink\" href=\"/settings/" + Object.keys(user.object.virtuals).indexOf(vm) + "\" style=\"position: relative; top: " + top + "px;\"><b>" + he.encode(vm) + " </b><span class=\"" + state + "-icon\"></span><label class=\"arrow manage-vm\">→</label></a>";
+			try {
+				let top = 0;
+				let container = docker.getContainer(user.object.virtuals[vm].id);
+				let state = await container.inspect();
+				state = state.State.Running ? "online" : "offline";
+				top = (Object.keys(user.object.virtuals).indexOf(vm)) * 10;
+				dockers = dockers + "<a class=\"object vmsetlink\" href=\"/settings/" + Object.keys(user.object.virtuals).indexOf(vm) + "\" style=\"position: relative; top: " + top + "px;\"><b>" + he.encode(vm) + " </b><span class=\"" + state + "-icon\"></span><label class=\"arrow manage-vm\">→</label></a>";
+			} catch {
+				delete user.object.virtuals[vm];
+				await db.set(user.username, user.object);
+			}
 		}
 	}
 	res.render(__dirname + "/template.jsembeds", {
@@ -320,14 +539,19 @@ app.get("/listContainer", async function (req, res) {
 	let dockers = [];
 	if (user.object.virtuals && !user.object.blockEnumVM) {
 		for (let vm in user.object.virtuals) {
-			let container = docker.getContainer(user.object.virtuals[vm].id);
-			let state = await container.inspect();
-			state = state.State.Running ? "online" : "offline";
-			dockers.push({
-				vmname: vm,
-				vmname_encoded: he.encode(vm),
-				status: state
-			});
+			try {
+				let container = docker.getContainer(user.object.virtuals[vm].id);
+				let state = await container.inspect();
+				state = state.State.Running ? "online" : "offline";
+				dockers.push({
+					vmname: vm,
+					vmname_encoded: he.encode(vm),
+					status: state
+				});
+			} catch {
+				delete user.object.virtuals[vm];
+				await db.set(user.username, user.object);
+			}
 		}
 	}
 	return res.send(dockers);
@@ -649,7 +873,7 @@ app.post("/whitectl/:vm", async function (req, res) {
 		msg: "This operation has been cancelled due to self-blocking in effect on your account (e5). Please contact the system administrator."
 	});
 	if (req.body.based == "0") {
-		delete user.object.virtuals[Object.keys(user.object.virtuals)[Number(req.params.vm)]].clickbased;
+		user.object.virtuals[Object.keys(user.object.virtuals)[Number(req.params.vm)]].clickbased = false;
 		if (!user.object.virtuals[Object.keys(user.object.virtuals)[Number(req.params.vm)]].whitelist) user.object.virtuals[Object.keys(user.object.virtuals)[Number(req.params.vm)]].whitelist = [];
 		if (!(await db.list()).includes(req.body.username)) return res.status(500).render(__dirname + "/redirector.jsembeds", {
 			target: "/whitectl/" + req.params.vm,
@@ -662,7 +886,7 @@ app.post("/whitectl/:vm", async function (req, res) {
 		if (user.object.virtuals[Object.keys(user.object.virtuals)[Number(req.params.vm)]].whitelist.includes(req.body.username)) return res.redirect("/whitectl/" + req.params.vm)
 		user.object.virtuals[Object.keys(user.object.virtuals)[Number(req.params.vm)]].whitelist.push(req.body.username);
 	} else if (req.body.based == "1") {
-		delete user.object.virtuals[Object.keys(user.object.virtuals)[Number(req.params.vm)]].whitelist;
+		user.object.virtuals[Object.keys(user.object.virtuals)[Number(req.params.vm)]].whitelist = [];
 		if (!user.object.virtuals[Object.keys(user.object.virtuals)[Number(req.params.vm)]].clickbased) user.object.virtuals[Object.keys(user.object.virtuals)[Number(req.params.vm)]].clickbased = false;
 		user.object.virtuals[Object.keys(user.object.virtuals)[Number(req.params.vm)]].clickbased = !user.object.virtuals[Object.keys(user.object.virtuals)[Number(req.params.vm)]].clickbased;
 	} else {
@@ -687,8 +911,8 @@ app.get("/whitectlReset/:vm", async function (req, res) {
 		target: "/",
 		msg: "This operation has been cancelled due to self-blocking in effect on your account (e5). Please contact the system administrator."
 	});
-	delete user.object.virtuals[Object.keys(user.object.virtuals)[Number(req.params.vm)]].whitelist;
-	delete user.object.virtuals[Object.keys(user.object.virtuals)[Number(req.params.vm)]].clickbased;
+	user.object.virtuals[Object.keys(user.object.virtuals)[Number(req.params.vm)]].whitelist = [];
+	user.object.virtuals[Object.keys(user.object.virtuals)[Number(req.params.vm)]].clickbased = false;
 	await db.set(user.username, user.object);
 	res.redirect("/whitectl/" + req.params.vm);
 });
