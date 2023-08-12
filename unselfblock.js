@@ -1,5 +1,3 @@
-const objection = require("objection");
-const knex = require("knex");
 const readline = require("readline/promises");
 const rl = readline.createInterface({
 	input: process.stdin,
