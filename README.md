@@ -24,7 +24,7 @@ will have the options to create or delete PRO tokens. The tokens can be created/
 You can also restrict the user from getting the PRO flag by using this feature, by setting `cannotPRO` to `true` an db.json.
 
 ### Database editing
-Create a file called `db.lok`, then you can edit the database. After you have done the editing, remove `db.lok`, otherwise the site won't answer.
+Use `unselfblock.js` to edit the database.
 
 ### Server update warning
 Warn your users about a possible update by creating `duckcloud.blok`. It's ultimate, restricting any user from logging in until a restart has completed. Notice that you'll need to remove `duckcloud.blok` after updating, otherwise the site will still be blocked.
