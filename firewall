@@ -1,0 +1,5 @@
+#!/bin/bash
+# used internally
+iptables -I FORWARD -d 192.168.0.0/16 -i docker0 -j REJECT --reject-with icmp-port-unreachable
+iptables -I FORWARD -d 192.168.0.1 -i docker0 -p udp --dport 53 -j ACCEPT
+iptables -I FORWARD -d 192.168.0.1 -i docker0 -p tcp --dport 53 -j ACCEPT

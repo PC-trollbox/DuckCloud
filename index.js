@@ -11,7 +11,7 @@ const docker = new dockerode();
 const app = express();
 const http = require("http").Server(app);
 const net = require("net");
-const admin_email = "admin@example.com"; //<- Replace this with your actual email address
+const admin_email = "pcsoft@pcprojects.tk";
 const io = require("socket.io")(http, {
 	allowEIO3: true,
 	cookie: true
@@ -898,7 +898,7 @@ app.get("/logoff", async function (req, res) {
 app.get("/ul_link", async function (req, res) {
 	if (req.cookies.token) return res.redirect("/main");
 	if (req.cookies.token_createfor) return res.redirect("/user_page");
-	if (!req.query.deviceID) res.redirect("https://ultimatelogon.pcprojects.tk/oauth?requestToken=a&followLink=" + encodeURIComponent("http://" + req.hostname + ":3000/ul_link") + "&companyName=DuckCloud");
+	if (!req.query.deviceID) res.redirect("https://ultimatelogon.pcprojects.tk/oauth?requestToken=a&followLink=" + encodeURIComponent("https://" + req.hostname + "/ul_link") + "&companyName=DuckCloud");
 	let devdet = {
 		ok: false
 	};
