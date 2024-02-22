@@ -1428,7 +1428,7 @@ io.on("connection", async function (client) {
 		}
 		if (typeof vm === "string") {
 			let base = await db_virtuals.get(vm);
-			let virt = await db.get(base.username).virtuals[base.vmname];
+			let virt = (await db.get(base.username)).virtuals[base.vmname];
 			if (virt.clickbased) id = virt.id;
 			else if (virt.whitelist) {
 				if (virt.whitelist.includes(user.username)) id = vm;
