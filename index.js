@@ -27,7 +27,7 @@ function setTimeoutAsync(ms) {
 const cookie = require("cookie");
 const db = {
 	get: async function (item) {
-		return this.db[item];
+		return this.db.users[item];
 	},
 	set: async function (item, content) {
 		while (fs.existsSync(__dirname + "/db.lok")) {
@@ -36,7 +36,7 @@ const db = {
 		fs.writeFileSync(__dirname + "/db.lok", "The database lock file!\r\nIf you got permanently locked:\r\nDelete this file.\r\nCause of lock: db.set");
 		fs.chmodSync(__dirname + "/db.lok", 448);
 		var db = JSON.parse(JSON.stringify(this.db));
-		db[item] = content;
+		db.users[item] = content;
 		this.db = db;
 		fs.rmSync(__dirname + "/db.lok", {
 			force: true
@@ -49,14 +49,96 @@ const db = {
 		fs.writeFileSync(__dirname + "/db.lok", "The database lock file!\r\nIf you got permanently locked:\r\nDelete this file.\r\nCause of lock: db.delete");
 		fs.chmodSync(__dirname + "/db.lok", 448);
 		var db = JSON.parse(JSON.stringify(this.db));
-		delete db[item];
+		delete db.users[item];
 		this.db = db;
 		fs.rmSync(__dirname + "/db.lok", {
 			force: true
 		});
 	},
 	list: async function () {
-		return Object.keys(this.db)
+		return Object.keys(this.db.users);
+	},
+	db: null,
+	get db() {
+		return JSON.parse(require("fs").readFileSync(__dirname + "/db.json"));
+	},
+	set db(val) {
+		require("fs").writeFileSync(__dirname + "/db.json", JSON.stringify(val, null, "\t"));
+	}
+};
+const db_tokens = {
+	get: async function (item) {
+		return this.db.tokens[item];
+	},
+	set: async function (item, content) {
+		while (fs.existsSync(__dirname + "/db.lok")) {
+			await setTimeoutAsync(500);
+		}
+		fs.writeFileSync(__dirname + "/db.lok", "The database lock file!\r\nIf you got permanently locked:\r\nDelete this file.\r\nCause of lock: db.set");
+		fs.chmodSync(__dirname + "/db.lok", 448);
+		var db = JSON.parse(JSON.stringify(this.db));
+		db.tokens[item] = content;
+		this.db = db;
+		fs.rmSync(__dirname + "/db.lok", {
+			force: true
+		});
+	},
+	delete: async function (item) {
+		while (fs.existsSync(__dirname + "/db.lok")) {
+			await setTimeoutAsync(500);
+		}
+		fs.writeFileSync(__dirname + "/db.lok", "The database lock file!\r\nIf you got permanently locked:\r\nDelete this file.\r\nCause of lock: db.delete");
+		fs.chmodSync(__dirname + "/db.lok", 448);
+		var db = JSON.parse(JSON.stringify(this.db));
+		delete db.tokens[item];
+		this.db = db;
+		fs.rmSync(__dirname + "/db.lok", {
+			force: true
+		});
+	},
+	list: async function () {
+		return Object.keys(this.db.tokens)
+	},
+	db: null,
+	get db() {
+		return JSON.parse(require("fs").readFileSync(__dirname + "/db.json"));
+	},
+	set db(val) {
+		require("fs").writeFileSync(__dirname + "/db.json", JSON.stringify(val, null, "\t"));
+	}
+};
+const db_virtuals = {
+	get: async function (item) {
+		return this.db.virtuals[item];
+	},
+	set: async function (item, content) {
+		while (fs.existsSync(__dirname + "/db.lok")) {
+			await setTimeoutAsync(500);
+		}
+		fs.writeFileSync(__dirname + "/db.lok", "The database lock file!\r\nIf you got permanently locked:\r\nDelete this file.\r\nCause of lock: db.set");
+		fs.chmodSync(__dirname + "/db.lok", 448);
+		var db = JSON.parse(JSON.stringify(this.db));
+		db.virtuals[item] = content;
+		this.db = db;
+		fs.rmSync(__dirname + "/db.lok", {
+			force: true
+		});
+	},
+	delete: async function (item) {
+		while (fs.existsSync(__dirname + "/db.lok")) {
+			await setTimeoutAsync(500);
+		}
+		fs.writeFileSync(__dirname + "/db.lok", "The database lock file!\r\nIf you got permanently locked:\r\nDelete this file.\r\nCause of lock: db.delete");
+		fs.chmodSync(__dirname + "/db.lok", 448);
+		var db = JSON.parse(JSON.stringify(this.db));
+		delete db.virtuals[item];
+		this.db = db;
+		fs.rmSync(__dirname + "/db.lok", {
+			force: true
+		});
+	},
+	list: async function () {
+		return Object.keys(this.db.virtuals)
 	},
 	db: null,
 	get db() {
@@ -155,27 +237,12 @@ function genToken(long = 16) {
 //Get user by token
 async function getUserByToken(token) {
 	if (fs.existsSync(__dirname + "/duckcloud.blok")) return null;
-	let users = await db.list();
-	for (let user of users) {
-		let obj = await db.get(user);
-		if (obj.blockLogin) continue;
-		for (let technician of obj.technicians) if (technician == token) return { object: obj, username: user, token: token, isTechToken: true };
-		if (obj.token == token) return { object: obj, username: user, token: token };
-	}
-	return null;
-}
-
-//Get user by DuckCloud assigned token
-async function findUserByDuckCloudAssignedToken(token) {
-	let users = await db.list();
-	for (let user of users) {
-		let obj = await db.get(user);
-		if (obj.linkedTo == token) return {
-			object: obj,
-			username: user,
-			token: obj.token
-		};
-	}
+	let tokenEntry = await db_tokens.get(token);
+	if (!tokenEntry) return null;
+	let obj = await db.get(tokenEntry);
+	if (!obj) return null;
+	if (obj.blockLogin) return null;
+	if (obj.token == token) return { object: obj, username: tokenEntry, token: token };
 	return null;
 }
 
@@ -218,11 +285,6 @@ app.get("/register", async function (req, res) {
 	res.render(__dirname + "/register.jsembeds");
 });
 
-app.get("/trustedTech", async function (req, res) {
-	if (req.cookies.token) return res.redirect("/main");
-	res.render(__dirname + "/userHelpToken.jsembeds");
-});
-
 app.post("/register", async function (req, res) {
 	if (req.cookies.token) return res.redirect("/main");
 	if (!req.body.username) return res.redirect("/register");
@@ -230,14 +292,15 @@ app.post("/register", async function (req, res) {
 	if ((await db.list()).includes(req.body.username)) {
 		return res.redirect("/register");
 	}
+	let token = genToken(64);
 	await db.set(req.body.username, {
 		password: SHA256(req.body.password),
-		token: genToken(64),
+		token: token,
 		virtuals: {},
 		isPRO: false,
-		disableSharing: true,
-		technicians: []
+		disableSharing: true
 	});
+	await db_tokens.set(token, req.body.username);
 	return res.redirect("/");
 });
 
@@ -252,7 +315,7 @@ app.post("/login", async function (req, res) {
 	if (SHA256(req.body.password) == user.password) {
 		if (user.blockLogin) return res.status(403).render(__dirname + "/redirector.jsembeds", {
 			target: "/",
-			msg: "This operation has been cancelled due to self-blocking in effect on your account (e5). Please contact the system administrator.<br>Help information: To unblock your account, contact the System Administrator (can be found <a href=\"/contact\">here</a>) and tell them your username and your recovery key. Tell them to unblock logon (and possibly other functions). If you don't have a recovery key, attempt to remember any information on your account that you have stored in VMs. Files must be in home directories (and your nobody user doesn't count as it has / as home).",
+			msg: "This operation has been cancelled due to self-blocking in effect on your account (e5). Please contact the system administrator.<br>Help information: To unblock your account, contact the System Administrator (can be found <a href=\"/contact\">here</a>) and tell them your username and your recovery key. Tell them to unblock logon (and possibly other functions). If you don't have a recovery key, attempt to remember any information on your account that you have stored in VMs.",
 			disableRedirect: true
 		});
 		res.cookie("token", user.token, {
@@ -264,28 +327,6 @@ app.post("/login", async function (req, res) {
 	res.redirect("/main");
 });
 
-app.post("/trustedTechLogin", async function (req, res) {
-	if (req.cookies.token) return res.redirect("/main");
-	if (!req.body.token) return res.redirect("/");
-	if (String(req.body.token).length != 32) return res.status(401).render(__dirname + "/redirector.jsembeds", {
-		target: "/",
-		msg: "Trusted Technician logon attempt failed: Invalid token length (needed 32 but got different value)"
-	});
-	let attempt = await getUserByToken(req.body.token);
-	if (!attempt) return res.status(401).render(__dirname + "/redirector.jsembeds", {
-		target: "/",
-		msg: "Trusted Technician logon attempt failed: Invalid token was provided."
-	});
-	if (!attempt.isTechToken) return res.status(401).render(__dirname + "/redirector.jsembeds", {
-		target: "/",
-		msg: "Trusted Technician logon attempt failed: Token contained invalid permissions."
-	});
-	res.cookie("token", req.body.token, {
-		maxAge: 30 * 24 * 60 * 60 * 1000
-	});
-	res.redirect("/main");
-});
-
 app.get("/main", async function (req, res) {
 	if (!req.cookies.token) return res.redirect("/");
 	let user = await getUserByToken(req.cookies.token);
@@ -294,7 +335,6 @@ app.get("/main", async function (req, res) {
 		return res.redirect("/");
 	}
 	let dockers = "";
-	if (user.isTechToken) dockers = dockers + "<div class=\"object\"><center><b>You are running as a technician</b>. <a href=\"/trustedTechReset\" onclick=\"return confirm('Are you really done with this account? Resetting your session will immediately log you off, and you will not be able to log back into this account.');\">Reset your session</a> or <a href=\"/logoff\" onclick=\"return confirm('Only use this when you are not able to fix the problem right now and want to return to it later. If you are 100% done, reset your session!');\">log out</a> when you're done.</center></div><br>"
 	if (user.object.virtuals && !user.object.blockEnumVM) {
 		for (let vm in user.object.virtuals) {
 			let top = 0;
@@ -352,7 +392,8 @@ app.get("/settings/:vm", async function (req, res) {
 		username: he.encode(user.username),
 		vm_count: req.params.vm,
 		vm_name: he.encode(Object.keys(user.object.virtuals)[Number(req.params.vm)]),
-		switch: state.State.Running ? "Turn off" : "Turn on"
+		switch: state.State.Running ? "Turn off" : "Turn on",
+		switc_hide_force: state.State.Running ? "" : "hidden"
 	});
 });
 
@@ -373,6 +414,7 @@ app.get("/burn/:vm", async function (req, res) {
 	let container = docker.getContainer(user.object.virtuals[Object.keys(user.object.virtuals)[Number(req.params.vm)]].id);
 	let state = await container.inspect();
 	let wasAlrRem = false;
+	await db_virtuals.delete(user.object.virtuals[exclude_name].id);
 	if (state.State.Running) {
 		if (all_features[user.object.virtuals[Object.keys(user.object.virtuals)[Number(req.params.vm)]].id]) {
 			if (!all_features[user.object.virtuals[Object.keys(user.object.virtuals)[Number(req.params.vm)]].id].ats) {
@@ -381,14 +423,16 @@ app.get("/burn/:vm", async function (req, res) {
 				};
 				wasAlrRem = true;
 				emitter.removeWorkspace(user.object.virtuals[Object.keys(user.object.virtuals)[Number(req.params.vm)]].id);
-				for (let vm in user.object.virtuals) {
-					if (vm == exclude_name) continue;
+ 				for (let vm in user.object.virtuals) {
+ 					if (vm == exclude_name) continue;
 					newList[vm] = user.object.virtuals[vm];
 				}
 				user.object.virtuals = newList;
 				await db.set(user.username, user.object);
 				try {
-					await container.stop();
+					await container.stop({
+						t: 0
+					});
 				} catch {}
 			} else {
 				return res.redirect("/settings/" + req.params.vm);
@@ -447,31 +491,27 @@ app.get("/shutoff/:vm", async function (req, res) {
 		};
 		emitter.removeWorkspace(user.object.virtuals[Object.keys(user.object.virtuals)[Number(req.params.vm)]].id);
 		try {
-			await container.stop();
+			await container.stop(req.query.force == "1" ? {
+				t: 0
+			} : undefined);
 		} catch {}
 	}
 	if (!state.State.Running) {
 		try {
 			let d = emitter.goToWorkspace(user.object.virtuals[Object.keys(user.object.virtuals)[Number(req.params.vm)]].id);
-			await container.start();
+			let attach = await container.attach({
+				stream: true,
+				stdin: true,
+				stdout: true,
+				stderr: true
+			});
 			all_features[user.object.virtuals[Object.keys(user.object.virtuals)[Number(req.params.vm)]].id] = {
 				shell: Buffer.from("Welcome to your DuckCloud VM!\r\n"),
 				ats: false
 			};
 			let our_vm = all_features[user.object.virtuals[Object.keys(user.object.virtuals)[Number(req.params.vm)]].id];
-			our_vm.exec = await container.exec({
-				Cmd: ['/bin/bash'],
-				Tty: true,
-				AttachStdin: true,
-				AttachStdout: true,
-				AttachStderr: true,
-				Privileged: false
-			});
-			our_vm.started_shell = await our_vm.exec.start({
-				Tty: true,
-				stdin: true
-			});
-			our_vm.started_shell.on("data", function (a) {
+			our_vm.started_shell = attach;
+			our_vm.started_shell.on("data", function(a) {
 				if ((our_vm.shell.length + a.length) < require("buffer").constants.MAX_STRING_LENGTH) {
 					our_vm.shell = Buffer.concat([our_vm.shell, a]);
 					d.emit("data", a);
@@ -497,6 +537,7 @@ app.get("/shutoff/:vm", async function (req, res) {
 				our_vm = {};
 			});
 			all_features[user.object.virtuals[Object.keys(user.object.virtuals)[Number(req.params.vm)]].id] = our_vm;
+			await container.start();
 		} catch {
 			all_features[user.object.virtuals[Object.keys(user.object.virtuals)[Number(req.params.vm)]].id] = {
 				ats: true
@@ -562,6 +603,10 @@ app.post("/chown/:vm", async function (req, res) {
 	while (Object.keys(newOwner.virtuals).includes(our_vm)) our_vm = our_vm + " (FROM " + user.username + ")";
 	newOwner.virtuals[our_vm] = user.object.virtuals[Object.keys(user.object.virtuals)[Number(req.params.vm)]];
 	delete user.object.virtuals[Object.keys(user.object.virtuals)[Number(req.params.vm)]];
+	await db_virtuals.set(newOwner.virtuals[our_vm].id, {
+		username: req.body.username,
+		vmname: our_vm
+	});
 	await db.set(user.username, user.object);
 	await db.set(req.body.username, newOwner);
 	res.redirect("/main");
@@ -609,6 +654,10 @@ app.post("/ren/:vm", async function (req, res) {
 		}
 	}
 	user.object.virtuals = virtuals2;
+	await db_virtuals.set(user.object.virtuals[Object.keys(user.object.virtuals)[Number(req.params.vm)]].id, {
+		username: user.username,
+		vmname: req.body.vmname
+	});
 	await db.set(user.username, user.object);
 	res.redirect("/settings/" + req.params.vm);
 });
@@ -757,65 +806,6 @@ app.post("/ramset/:vm", async function (req, res) {
 	res.redirect("/settings/" + req.params.vm);
 });
 
-app.post("/newInput/:vm", async function (req, res) {
-	if (!req.cookies.token) return res.redirect("/");
-	let user = await getUserByToken(req.cookies.token);
-	if (!user) {
-		res.clearCookie("token");
-		return res.redirect("/");
-	}
-	if (!Object.keys(user.object.virtuals)[Number(req.params.vm)]) return res.redirect("/main");
-	if (user.object.blockEnumVM) return res.send("\r\nThis operation has been cancelled due to self-blocking in effect on your account (e5). Please contact the system administrator.");
-	let our_vm = all_features[user.object.virtuals[Object.keys(user.object.virtuals)[Number(req.params.vm)]].id];
-	if (!our_vm) return res.end();
-	if (our_vm.ats) {
-		return res.send("\r\nYour virtual machine is about to stop (e2). To use this Linux console again, restart your VM.");
-	}
-	res.send(our_vm.shell);
-});
-
-app.get("/sendInput/:vm", async function (req, res) {
-	if (!req.cookies.token) return res.redirect("/");
-	let user = await getUserByToken(req.cookies.token);
-	if (!user) {
-		res.clearCookie("token");
-		return res.redirect("/");
-	}
-	if (!Object.keys(user.object.virtuals)[Number(req.params.vm)]) return res.redirect("/main");
-	if (user.object.blockEnumVM) return res.send("\r\nThis operation has been cancelled due to self-blocking in effect on your account (e5). Please contact the system administrator.");
-	let our_vm = all_features[user.object.virtuals[Object.keys(user.object.virtuals)[Number(req.params.vm)]].id];
-	if (!our_vm) return res.end();
-	if (our_vm.ats) {
-		return res.send("\r\nYour virtual machine is about to stop (e2). To use this Linux console again, restart your VM.");
-	}
-	if (typeof req.query.new !== "string") return res.send("soft fail");
-	our_vm.started_shell.write(String(req.query.new || "") || "");
-	res.send("ok");
-});
-
-app.get("/resize/:vm", async function (req, res) {
-	if (!req.cookies.token) return res.redirect("/");
-	let user = await getUserByToken(req.cookies.token);
-	if (!user) {
-		res.clearCookie("token");
-		return res.redirect("/");
-	}
-	if (!Object.keys(user.object.virtuals)[Number(req.params.vm)]) return res.redirect("/main");
-	if (user.object.blockEnumVM) return res.send("\r\nThis operation has been cancelled due to self-blocking in effect on your account (e5). Please contact the system administrator.");
-	let our_vm = all_features[user.object.virtuals[Object.keys(user.object.virtuals)[Number(req.params.vm)]].id];
-	if (!our_vm) return res.end();
-	if (our_vm.ats) {
-		return res.send("\r\nYour virtual machine is about to stop (e2). To use this Linux console again, restart your VM.");
-	}
-	if (isNaN(Number(req.query.w)) || !isFinite(Number(req.query.w))) return res.send("soft fail");
-	if (isNaN(Number(req.query.h)) || !isFinite(Number(req.query.h))) return res.send("soft fail");
-	our_vm.exec.resize({
-		w: req.query.w,
-		h: req.query.h
-	});
-	res.send("ok");
-});
-
 app.get("/newVM", async function (req, res) {
 	if (!req.cookies.token) return res.redirect("/");
 	let user = await getUserByToken(req.cookies.token);
@@ -863,13 +853,13 @@ app.post("/newVM", async function (req, res) {
 
 	let d = await docker.createContainer({
 		Image: req.body.distro,
-		AttachStdin: false,
+		AttachStdin: true,
 		AttachStdout: true,
 		AttachStderr: true,
 		Tty: true,
 		Cmd: managedInit.includes(req.body.distro) ? ['sh', '/etc/init_exec.sh'] : ['/bin/bash'],
-		OpenStdin: false,
-		StdinOnce: false,
+		OpenStdin: true,
+		StdinOnce: true,
 		NetworkDisabled: ((req.body.shouldHaveNetworking || "off") == "off"),
 		HostConfig: {
 			Memory: ((req.body.shouldUse512mbRAM || "off") == "on") ? 536870912 : 134217728,
@@ -881,6 +871,7 @@ app.post("/newVM", async function (req, res) {
 		id: red.Id
 	};
 	await db.set(user.username, user.object);
+	await db_virtuals.set(red.Id, { username: user.username, vmname: req.body.vm_name });
 	res.redirect("/settings/" + (Object.keys(user.object.virtuals).length - 1));
 });
 
@@ -893,166 +884,6 @@ app.get("/logoff", async function (req, res) {
 	}
 	res.clearCookie("token");
 	return res.redirect("/");
-});
-
-app.get("/ul_link", async function (req, res) {
-	if (req.cookies.token) return res.redirect("/main");
-	if (req.cookies.token_createfor) return res.redirect("/user_page");
-	if (!req.query.deviceID) res.redirect("https://ultimatelogon.pcprojects.tk/oauth?requestToken=a&followLink=" + encodeURIComponent("http://" + req.hostname + ":3000/ul_link") + "&companyName=DuckCloud");
-	let devdet = {
-		ok: false
-	};
-	try {
-		devdet = await fetch("https://ultimatelogon.pcprojects.tk/deviceDetails?device=" + req.query.deviceID);
-	} catch (e) {}
-	if (!devdet.ok) {
-		return res.status(400).end();
-	}
-	let json;
-	try {
-		json = await devdet.json();
-	} catch (err) {
-		return res.status(400).end();
-	}
-	//You might want to save data here.
-	res.cookie("token_createfor", json.user.token);
-	res.cookie("createfor_password", json.user.password)
-	let data = {
-		json: function () {}
-	};
-	try {
-		data = await fetch("https://ultimatelogon.pcprojects.tk/appdata", {
-			headers: {
-				"Cookie": "token=" + json.user.token
-			}
-		});
-	} catch {
-
-	}
-	data = await data.json();
-	if (data.duckcloud_token) {
-		let user = await findUserByDuckCloudAssignedToken(data.duckcloud_token);
-		if (!user) return res.redirect("/user_page");
-		res.clearCookie("token_createfor");
-		res.clearCookie("createfor_password");
-		if (user.object.block_ul) return res.redirect("https://ultimatelogon.pcprojects.tk/blocked_user?appName=DuckCloud");
-		res.cookie("token", user.token, {
-			maxAge: 30 * 24 * 60 * 60 * 1000
-		});
-		return res.redirect("/main");
-	}
-	res.redirect("/user_page");
-});
-app.get("/user_page", async function (req, res) {
-	if (req.cookies.token) return res.redirect("/main");
-	if (!req.cookies.token_createfor) return res.redirect("/ul_link");
-	let a = {
-		ok: false
-	}
-	try {
-		a = await fetch("https://ultimatelogon.pcprojects.tk/username_scripting", {
-			headers: {
-				"Cookie": "token=" + req.cookies.token_createfor
-			}
-		});
-	} catch {
-
-	}
-	if (!a.ok) {
-		res.clearCookie("token_createfor");
-		return res.redirect("/ul_link");
-	}
-	res.render(__dirname + "/select_user_type.jsembeds", {
-		username: he.encode(await a.text())
-	});
-});
-app.post("/user_page", async function (req, res) {
-	if (req.cookies.token) return res.redirect("/main");
-	if (!req.cookies.token_createfor) return res.redirect("/ul_link");
-	let a = {
-		ok: false
-	};
-	try {
-		a = await fetch("https://ultimatelogon.pcprojects.tk/username_scripting", {
-			headers: {
-				"Cookie": "token=" + req.cookies.token_createfor
-			}
-		});
-	} catch {}
-	if (!a.ok) {
-		res.clearCookie("token_createfor");
-		return res.redirect("/ul_link");
-	}
-	if (req.body.account_type != "new" && req.body.account_type != "link") return res.redirect("/user_page");
-	if (req.body.account_type == "link" && !req.body.old_user) return res.redirect("/user_page");
-	if (req.body.account_type == "link" && !req.body.old_pass) return res.redirect("/user_page");
-	if (req.body.account_type == "new" && ((await db.list()).includes(await a.text()))) return res.redirect("/ul_link");
-	if (req.body.account_type == "link") {
-		if (!((await db.list()).includes(req.body.old_user))) {
-			return res.redirect("/ul_link");
-		}
-		let user = await db.get(req.body.old_user);
-		if (user.block_ul) {
-			return res.redirect("https://ultimatelogon.pcprojects.tk/blocked_user?appName=DuckCloud")
-		}
-		let token = genToken(32);
-		let data = {
-			json: function () {
-				return {}
-			}
-		};
-		try {
-			data = await fetch("https://ultimatelogon.pcprojects.tk/appdata", {
-				headers: {
-					"Cookie": "token=" + req.cookies.token_createfor
-				}
-			});
-		} catch {
-
-		}
-		data = await data.json();
-		data["duckcloud_token"] = token;
-		try {
-			await fetch("https://ultimatelogon.pcprojects.tk/appdata", {
-				method: "POST",
-				headers: {
-					"Content-Type": "application/json",
-					"Cookie": "token=" + req.cookies.token_createfor
-				},
-				body: JSON.stringify({
-					"appdata": JSON.stringify(data)
-				})
-			});
-		} catch {
-
-		}
-		if (SHA256(req.body.old_pass) == user.password) {
-			user.linkedTo = token;
-			await db.set(req.body.old_user, user);
-		} else {
-			return res.redirect("/ul_link");
-		}
-	} else {
-		try {
-			let user = await fetch("https://ultimatelogon.pcprojects.tk/username_scripting", {
-				headers: {
-					"Cookie": "token=" + req.cookies.token_createfor
-				}
-			});
-			user = await user.text();
-			await db.set(user, {
-				password: req.cookies.createfor_password,
-				token: genToken(64),
-				virtuals: {},
-				isPRO: false,
-				assignedTo: token,
-				disableSharing: true
-			});
-		} catch {}
-	}
-	res.clearCookie("token_createfor");
-	res.clearCookie("createfor_password");
-	res.redirect("/");
 });
 
 app.get("/manage", async function (req, res) {
@@ -1075,8 +906,6 @@ app.get("/manage", async function (req, res) {
 	}
 	res.render(__dirname + "/manage.jsembeds", {
 		username: he.encode(user.username),
-		associatedCS: (user.object.linkedTo) ? "" : "<!--",
-		associatedCE: (user.object.linkedTo) ? "" : "-->",
 		disableSharing: (user.object.disableSharing) ? "no sharing" : "accept sharing",
 		pfm_adm: (user.username == "pro_coder") ? `${fixedprocodes}
 		<br>
@@ -1090,8 +919,6 @@ app.get("/manage", async function (req, res) {
 		pfm_cmtend_only_nonpro: (user.object.isPRO) ? "-->" : "",
 		blocked_pro: (user.object.cannotPRO) ? "disabled checked" : "",
 		blocked_enum: (user.object.blockEnumVM) ? "disabled checked" : "",
-		blocked_ultimatelogon: (user.object.block_ul) ? "disabled checked" : "",
-		certifiedDuckCloudTech: (user.object.isCertifiedTechnician) ? "" : "n't",
 		isRecoveryKeyStale: (user.object.recoveryKey) ? "No" : "Yes"
 	});
 });
@@ -1107,10 +934,10 @@ app.post("/changePassword", async function (req, res) {
 	}
 	if (SHA256(req.body.oldPassword) == user.object.password) {
 		user.object.password = SHA256(req.body.newPassword);
+		await db_tokens.delete(user.object.token);
 		user.object.token = genToken(64);
-		user.object.technicians.length = 0;
+		await db_tokens.set(user.object.token, user.username);
 		await db.set(user.username, user.object);
-		//InVeNTed behaviour.
 		res.clearCookie("token");
 		res.redirect("/");
 	} else {
@@ -1126,20 +953,18 @@ app.post("/destroyAccount", async function (req, res) {
 		res.clearCookie("token");
 		return res.redirect("/");
 	}
-	if (user.isTechToken) return res.render(__dirname + "/redirector.jsembeds", {
-		target: "/manage",
-		msg: "A trusted technician cannot delete an account! Only the user can use this tool."
-	});
 	if (SHA256(req.body.password) == user.object.password) {
+		await db_tokens.delete(user.object.token);
 		await db.delete(user.username);
 		res.clearCookie("token");
 		for (let virtual in user.object.virtuals) {
-			let container = docker.getContainer(user.object.virtuals[virtual]);
+			await db_virtuals.delete(user.object.virtuals[virtual].id);
+			let container = docker.getContainer(user.object.virtuals[virtual].id);
 			let inspects = await container.inspect();
 			if (inspects.State.Running) {
-				emitter.removeWorkspace(user.object.virtuals[virtual]);
+				emitter.removeWorkspace(user.object.virtuals[virtual].id);
 				try {
-					await container.stop();
+					await container.stop({ t: 0 });
 				} catch {}
 			}
 			await container.remove();
@@ -1157,35 +982,12 @@ app.post("/changeToken", async function (req, res) {
 		res.clearCookie("token");
 		return res.redirect("/");
 	}
-	if (user.isTechToken) return res.render(__dirname + "/redirector.jsembeds", {
-		target: "/manage",
-		msg: "Please ask the user to reset the token themselves. This tool won't do anything."
-	});
+	await db_tokens.delete(user.object.token);
 	user.object.token = genToken(64);
-	user.object.technicians.length = 0;
+	await db_tokens.set(user.object.token, user.username);
 	await db.set(user.username, user.object);
 	res.clearCookie("token");
 	res.redirect("/");
-});
-
-app.post("/ul_unlink", async function (req, res) {
-	if (!req.body.password) return res.redirect("/manage");
-	if (!req.cookies.token) return res.redirect("/");
-	let user = await getUserByToken(req.cookies.token);
-	if (!user) {
-		res.clearCookie("token");
-		return res.redirect("/");
-	}
-	if (SHA256(req.body.password) == user.object.password) {
-		delete user.object.linkedTo;
-		await db.set(user.username, user.object);
-		res.render(__dirname + "/redirector.jsembeds", {
-			target: "/manage",
-			msg: "Successful!"
-		});
-	} else {
-		return res.redirect("/manage");
-	}
 });
 
 app.post("/toggle_sharing", async function (req, res) {
@@ -1311,10 +1113,6 @@ app.post("/selfblocking", async function (req, res) {
 		res.clearCookie("token");
 		return res.redirect("/");
 	}
-	if (user.isTechToken) return res.render(__dirname + "/redirector.jsembeds", {
-		target: "/manage",
-		msg: "This feature is limited to users. You are logged in as a trusted technician at this moment."
-	});
 	let newFlags = {};
 	if (req.body.block_pro == "on" && !user.object.cannotPRO) {
 		newFlags.cannotPRO = true;
@@ -1322,14 +1120,12 @@ app.post("/selfblocking", async function (req, res) {
 	}
 	if (req.body.block_enumVM == "on" && !user.object.blockEnumVM) newFlags.blockEnumVM = true;
 	if (req.body.block_ID == "on" && !user.object.blockLogin) newFlags.blockLogin = true;
-	if (req.body.block_ULID == "on" && !user.object.block_ul) newFlags.block_ul = true;
 	let userfriendly = "";
 	for (let flag in newFlags) {
 		if (flag == "cannotPRO") userfriendly = userfriendly + "<em>Disabled the ability to gain PRO flag</em><br>";
 		else if (flag == "isPRO") userfriendly = userfriendly + "<em>Disabled the PRO flag</em><br>";
 		else if (flag == "blockEnumVM") userfriendly = userfriendly + "<em>Disabled the ability to use virtual machines</em><br>";
 		else if (flag == "blockLogin") userfriendly = userfriendly + "<em>Disabled your account</em><br>";
-		else if (flag == "block_ul") userfriendly = userfriendly + "<em>Disabled usage of UltimateLogon</em><br>";
 		else userfriendly = userfriendly + `<em>Unknown flag <code>${he.encode(flag||"")}</code> set to <code>${he.encode(newFlags[flag]||"")}</code></em><br>`;
 		user.object[flag] = newFlags[flag];
 	}
@@ -1349,10 +1145,6 @@ app.post("/recoveryKey", async function (req, res) {
 		res.clearCookie("token");
 		return res.redirect("/");
 	}
-	if (user.isTechToken) return res.render(__dirname + "/redirector.jsembeds", {
-		target: "/manage",
-		msg: "This feature is limited to users. You are logged in as a trusted technician at this moment."
-	});
 	if (SHA256(req.body.password) != user.object.password) return res.render(__dirname + "/redirector.jsembeds", {
 		target: "/manage",
 		msg: "Wrong password."
@@ -1364,61 +1156,6 @@ app.post("/recoveryKey", async function (req, res) {
 		target: "/manage",
 		msg: "Your new recovery key is: <label class=\"hideWithoutHover\" onclick=\"this.classList.contains('hideWithoutHover')?this.classList.remove('hideWithoutHover'):this.classList.add('hideWithoutHover')\"><code>" + he.encode(recoveryKey) + "</code></label><br>Please: store the key in a physical location or a password manager; do not give the key to anyone except the email you see in <a href=\"/contact\" target=\"_blank\" rel=\"noopener noreferrer\">contact us page</a> (this opens in a new tab); rotate the key after a successful account recovery (it IS required!); do not use the recovery key when you don't need it; do not use the recovery key as a password to another service.",
 		disableRedirect: true
-	});
-});
-
-app.post("/trustedTechCreate", async function (req, res) {
-	if (!req.cookies.token) return res.redirect("/");
-	let user = await getUserByToken(req.cookies.token);
-	if (!user) {
-		res.clearCookie("token");
-		return res.redirect("/");
-	}
-	if (user.isTechToken) return res.render(__dirname + "/redirector.jsembeds", {
-		target: "/manage",
-		msg: "A trusted technician cannot link a trusted technician. Only the user can use this!"
-	});
-	let trustTech = genToken(32);
-	user.object.technicians.push(trustTech);
-	await db.set(user.username, user.object);
-	res.render(__dirname + "/redirector.jsembeds", {
-		target: "/manage",
-		msg: "Trusted Technician session created! Please give this password to the technician: <code>" + trustTech + "</code><br>Please do not give this out to someone you don't trust. If you don't trust the person who requested this - go back to Manage, Trusted Technician, and then click \"Reset technician session\". Confirm your action by clicking Ok. Your account is no longer accessible by others after doing these steps.",
-		disableRedirect: true
-	});
-});
-
-app.get("/trustedTechReset", async function (req, res) {
-	if (!req.cookies.token) return res.redirect("/");
-	let user = await getUserByToken(req.cookies.token);
-	if (!user) {
-		res.clearCookie("token");
-		return res.redirect("/");
-	}
-	user.object.technicians.length = 0;
-	await db.set(user.username, user.object);
-	res.render(__dirname + "/redirector.jsembeds", {
-		target: "/manage",
-		msg: "Trusted Technician logged out successfully."
-	});
-});
-
-app.get("/trustedTechQuery", async function (req, res) {
-	if (!req.cookies.token) return res.redirect("/");
-	let user = await getUserByToken(req.cookies.token);
-	if (!user) {
-		res.clearCookie("token");
-		return res.redirect("/");
-	}
-	let users = await db.list();
-	for (let user of users) if ((await db.get(user)).isCertifiedTechnician && user == req.query.username) return res.render(__dirname + "/redirector.jsembeds", {
-		target: "/manage",
-		msg: "<code>" + req.query.username + "</code> is a valid DuckCloud Certified Technician!",
-		disableRedirect: true
-	});
-	res.render(__dirname + "/redirector.jsembeds", {
-		target: "/manage",
-		msg: "<b><code>" + req.query.username + "</code> is not a valid DuckCloud Certified Technician</b>"
 	});
 });
 
@@ -1687,23 +1424,14 @@ io.on("connection", async function (client) {
 		let id = "";
 		if (typeof vm === "number") {
 			if (!Object.keys(user.object.virtuals)[Number(vm)]) return client.disconnect();
-			id = user.object.virtuals[Object.keys(user.object.virtuals)[Number(vm)]].id
+			id = user.object.virtuals[Object.keys(user.object.virtuals)[Number(vm)]].id;
 		}
 		if (typeof vm === "string") {
-			let base = await db.list();
-			for (let user of base) {
-				let userbase_data = await db.get(user);
-				for (let virt in userbase_data.virtuals) {
-					if (userbase_data.virtuals[virt].id == vm) {
-						if (userbase_data.virtuals[virt].clickbased) {
-							id = vm;
-						} else if (userbase_data.virtuals[virt].whitelist) {
-							if (userbase_data.virtuals[virt].whitelist.includes(user.username)) {
-								id = vm;
-							}
-						}
-					}
-				}
+			let base = await db_virtuals.get(user);
+			let virt = await db.get(base.username).virtuals[base.vmname];
+			if (virt.clickbased) id = virt.id;
+			else if (virt.whitelist) {
+				if (virt.whitelist.includes(user.username)) id = vm;
 			}
 		}
 		if (!id) {
