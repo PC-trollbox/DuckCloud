@@ -386,6 +386,7 @@ app.get("/shutoff/:vm", async function (req, res) {
 			};
 			let our_vm = all_features[user.object.virtuals[Object.keys(user.object.virtuals)[Number(req.params.vm)]].id];
 			our_vm.started_shell = attach;
+			our_vm.exec = container;
 			our_vm.started_shell.on("data", function(a) {
 				if ((our_vm.shell.length + a.length) < require("buffer").constants.MAX_STRING_LENGTH) {
 					our_vm.shell = Buffer.concat([our_vm.shell, a]);
